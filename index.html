@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unabl.app - Celebrate Together</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fbf7ed',
+              100: '#f5edd3',
+              500: '#d97706',
+              600: '#b45309',
+              900: '#78350f',
+            },
+            accent: {
+              500: '#8b5cf6',
+              600: '#7c3aed',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .rtl-layout { direction: rtl; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Header / Navigation -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="bg-gradient-to-tr from-amber-500 to-violet-600 text-white font-black text-xl p-2 rounded-xl tracking-wider">
+          UB
+        </div>
+        <div>
+          <span class="font-bold text-xl tracking-tight text-slate-900">Unabl<span class="text-amber-600">.app</span></span>
+          <span class="block text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Celebrate & Gift</span>
+        </div>
+      </div>
+
+      <!-- Language Switcher & Geo Indicator -->
+      <div class="flex items-center gap-3">
+        <div id="geoBadge" class="hidden sm:flex items-center gap-1.5 bg-slate-100 text-slate-600 text-xs px-3 py-1.5 rounded-full border border-slate-200">
+          <i class="fa-solid fa-location-dot text-amber-500"></i>
+          <span id="geoText">Detecting Location...</span>
+        </div>
+
+        <div class="relative">
+          <select id="langSelect" onchange="changeLanguage(this.value)" class="bg-slate-100 text-slate-700 text-xs sm:text-sm font-medium py-1.5 px-3 pr-8 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+            <option value="en">English (US)</option>
+            <option value="es">Español</option>
+            <option value="hi">हिंदी (Hindi)</option>
+            <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+            <option value="fa">فارسی (Farsi)</option>
+            <option value="ar">العربية (Arabic)</option>
+            <option value="ru">Русский (Russian)</option>
+            <option value="pt">Português</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Role Switcher Tabs -->
+    <div class="flex border-b border-slate-200 mb-6 bg-white p-1 rounded-xl shadow-sm border">
+      <button onclick="switchTab('guest')" id="tab-guest" class="tab-btn flex-1 py-3 px-4 text-center text-sm font-bold rounded-lg transition-all text-amber-600 bg-amber-50 shadow-sm">
+        <i class="fa-solid fa-envelope-open-text mr-2"></i>Guest / RSVP & Gift
+      </button>
+      <button onclick="switchTab('host')" id="tab-host" class="tab-btn flex-1 py-3 px-4 text-center text-sm font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900">
+        <i class="fa-solid fa-calendar-plus mr-2"></i>Host / Create Event
+      </button>
+      <button onclick="switchTab('seller')" id="tab-seller" class="tab-btn flex-1 py-3 px-4 text-center text-sm font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900">
+        <i class="fa-solid fa-store mr-2"></i>Card Marketplace
+      </button>
+    </div>
+
+    <!-- TAB 1: GUEST / FIND HASHTAG & RSVP -->
+    <div id="content-guest" class="tab-content active space-y-6">
+      
+      <!-- Hashtag Search Hero -->
+      <div class="bg-gradient-to-r from-amber-500 via-amber-600 to-violet-600 rounded-2xl p-6 sm:p-10 text-white shadow-xl">
+        <div class="max-w-2xl mx-auto text-center space-y-4">
+          <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight" data-i18n="hero_title">Received an Invite?</h1>
+          <p class="text-amber-100 text-sm sm:text-base" data-i18n="hero_sub">Enter the event hashtag below to confirm attendance, send a custom E-card, and give a monetary blessing directly to the host.</p>
+          
+          <div class="flex items-center bg-white rounded-xl p-2 shadow-2xl max-w-lg mx-auto">
+            <span class="text-amber-600 font-bold text-xl px-3">#</span>
+            <input type="text" id="searchHashtag" placeholder="e.g. MayaAndRaj2026" class="w-full py-2 px-2 text-slate-800 focus:outline-none text-base font-semibold">
+            <button onclick="searchEvent()" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-lg font-bold transition flex items-center gap-2">
+              <i class="fa-solid fa-magnifying-glass"></i> <span data-i18n="find_btn">Find</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event Result & Action Card (Initially Hidden or Populated) -->
+      <div id="eventCard" class="bg-white rounded-2xl border border-slate-200 shadow-md p-6 sm:p-8 grid md:grid-cols-12 gap-8">
+        
+        <!-- Left Column: Event Details -->
+        <div class="md:col-span-5 space-y-4 border-b md:border-b-0 md:border-r border-slate-200 pb-6 md:pb-0 md:pr-8">
+          <div class="inline-block bg-violet-100 text-violet-700 font-semibold text-xs px-3 py-1 rounded-full uppercase tracking-wider" id="eventCategory">
+            Wedding Celebration
+          </div>
+          <h2 class="text-2xl font-bold text-slate-900" id="eventTitle">Maya & Raj's Wedding</h2>
+          <p class="text-xs text-amber-600 font-bold tracking-wide" id="displayHashtag">#MayaAndRaj2026</p>
+          
+          <div class="space-y-3 text-sm text-slate-600 pt-2">
+            <div class="flex items-center gap-3">
+              <i class="fa-solid fa-calendar text-amber-500 w-5"></i>
+              <span id="eventDate">October 24, 2026 • 5:00 PM</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <i class="fa-solid fa-location-pin text-amber-500 w-5"></i>
+              <span id="eventLocation">Fresno Grand Ballroom, Fresno, CA</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <i class="fa-solid fa-user text-amber-500 w-5"></i>
+              <span>Hosted by <strong id="hostName">Maya Patel</strong></span>
+            </div>
+          </div>
+
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 space-y-1">
+            <p class="font-bold"><i class="fa-solid fa-heart mr-1"></i> Host Note:</p>
+            <p class="italic">"We are excited to celebrate our special day with family and friends! If you are unable to attend in person, your warm wishes and gifts are deeply cherished."</p>
+          </div>
+        </div>
+
+        <!-- Right Column: RSVP, E-Card & Gift Checkout -->
+        <div class="md:col-span-7 space-y-6">
+          <h3 class="text-lg font-bold text-slate-900 border-b pb-2">Your Response & Blessing</h3>
+
+          <!-- RSVP Selection -->
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">1. Select RSVP Status</label>
+            <div class="grid grid-cols-2 gap-3">
+              <button onclick="setRSVP('attending')" id="rsvp-attending" class="rsvp-opt py-3 px-4 border-2 border-amber-500 bg-amber-50 text-amber-900 font-bold rounded-xl flex items-center justify-center gap-2 text-sm">
+                <i class="fa-solid fa-circle-check text-amber-600"></i> Joyfully Attending
+              </button>
+              <button onclick="setRSVP('unabl')" id="rsvp-unabl" class="rsvp-opt py-3 px-4 border-2 border-slate-200 bg-white text-slate-600 font-bold rounded-xl flex items-center justify-center gap-2 text-sm hover:border-slate-300">
+                <i class="fa-solid fa-heart-crack text-rose-500"></i> Unabl to Attend
+              </button>
+            </div>
+          </div>
+
+          <!-- Select E-Card -->
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">2. Select Congratulatory E-Card</label>
+            <div class="grid grid-cols-3 gap-3">
+              <div onclick="selectCard(this, 'Floral Elegance')" class="card-select border-2 border-amber-500 rounded-xl p-2 cursor-pointer bg-amber-50 relative">
+                <div class="h-16 bg-gradient-to-tr from-pink-300 to-rose-400 rounded-lg flex items-center justify-center text-white text-xs font-bold text-center p-1">
+                  Floral Elegance
+                </div>
+                <p class="text-[10px] text-slate-500 text-center mt-1">By Studio Luxe</p>
+              </div>
+              <div onclick="selectCard(this, 'Royal Gold')" class="card-select border-2 border-slate-200 rounded-xl p-2 cursor-pointer bg-white relative hover:border-slate-300">
+                <div class="h-16 bg-gradient-to-tr from-amber-300 to-yellow-600 rounded-lg flex items-center justify-center text-white text-xs font-bold text-center p-1">
+                  Royal Gold
+                </div>
+                <p class="text-[10px] text-slate-500 text-center mt-1">By PaperArt Co.</p>
+              </div>
+              <div onclick="selectCard(this, 'Modern Minimal')" class="card-select border-2 border-slate-200 rounded-xl p-2 cursor-pointer bg-white relative hover:border-slate-300">
+                <div class="h-16 bg-gradient-to-tr from-slate-700 to-slate-900 rounded-lg flex items-center justify-center text-white text-xs font-bold text-center p-1">
+                  Modern Minimal
+                </div>
+                <p class="text-[10px] text-slate-500 text-center mt-1">By DesignHub</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Message Input -->
+          <div>
+            <textarea id="guestMessage" rows="2" placeholder="Write a heartwarming message for the host..." class="w-full text-xs p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+          </div>
+
+          <!-- Monetary Gift ($10 - $1000) -->
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">3. Send Monetary Gift ($10 - $1,000)</label>
+              <span class="text-xs text-slate-500">Direct via Stripe</span>
+            </div>
+            
+            <div class="grid grid-cols-4 gap-2">
+              <button onclick="setGiftAmount(50)" class="gift-btn py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50">$50</button>
+              <button onclick="setGiftAmount(100)" class="gift-btn py-2 border border-amber-500 bg-amber-50 rounded-lg text-sm font-bold text-amber-800">$100</button>
+              <button onclick="setGiftAmount(250)" class="gift-btn py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50">$250</button>
+              <button onclick="setGiftAmount(500)" class="gift-btn py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50">$500</button>
+            </div>
+
+            <div class="relative">
+              <span class="absolute left-3 top-2.5 text-slate-400 font-bold">$</span>
+              <input type="number" id="customGift" min="10" max="1000" value="100" oninput="calculateFees(this.value)" class="w-full pl-7 pr-4 py-2 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            </div>
+
+            <!-- Transparency Fee Breakdown -->
+            <div class="bg-slate-50 rounded-xl p-3 border border-slate-200 text-xs space-y-1.5 text-slate-600">
+              <div class="flex justify-between">
+                <span>Gift to Host:</span>
+                <span class="font-bold text-slate-900" id="breakdownGift">$100.00</span>
+              </div>
+              <div class="flex justify-between text-slate-500">
+                <span>Unabl Platform Fee (2%):</span>
+                <span id="breakdownUnabl">$2.00</span>
+              </div>
+              <div class="flex justify-between text-slate-500">
+                <span>Stripe Processing (2.9% + $0.30):</span>
+                <span id="breakdownStripe">$3.20</span>
+              </div>
+              <div class="border-t border-slate-200 pt-1 flex justify-between font-bold text-slate-900">
+                <span>Total Payment:</span>
+                <span id="breakdownTotal" class="text-amber-600">$105.20</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button onclick="processCheckout()" class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-extrabold py-3.5 rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-lock"></i> Send Blessing & Pay <span id="btnPayTotal">$105.20</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: HOST / CREATE & ACKNOWLEDGE -->
+    <div id="content-host" class="tab-content space-y-6">
+      <div class="grid lg:grid-cols-12 gap-8">
+        
+        <!-- Create Event Form -->
+        <div class="lg:col-span-6 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <h2 class="text-xl font-bold text-slate-900 border-b pb-3"><i class="fa-solid fa-calendar-plus text-amber-600 mr-2"></i>Create New Event</h2>
+          
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Event Category</label>
+            <select id="eventCatInput" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              <option>Wedding</option>
+              <option>Birthday</option>
+              <option>Anniversary</option>
+              <option>Graduation</option>
+              <option>Sweet 16</option>
+              <option>Baby Shower</option>
+              <option>Other Celebration</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Event Title</label>
+            <input type="text" placeholder="e.g. Sophia's Sweet 16 Bash" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Unique Event Hashtag (ID)</label>
+            <div class="relative">
+              <span class="absolute left-3 top-2.5 text-slate-400 font-bold">#</span>
+              <input type="text" id="newHashtagInput" placeholder="SophiasSweet16" class="w-full pl-7 p-2.5 border border-slate-200 rounded-xl text-sm font-bold text-amber-600 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1">Guests will use this hashtag to search your event on Unabl.app.</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Date & Time</label>
+              <input type="datetime-local" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Location / Venue</label>
+              <input type="text" placeholder="City or Venue Name" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Connect Stripe Account (Payouts)</label>
+            <button type="button" class="w-full bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold py-2.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-indigo-100">
+              <i class="fa-brands fa-stripe text-lg"></i> Connect with Stripe Express
+            </button>
+          </div>
+
+          <button onclick="saveEvent()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition">
+            Publish Event & Generate Invitations
+          </button>
+        </div>
+
+        <!-- Host Dashboard: Received Gifts & Thank You E-Cards -->
+        <div class="lg:col-span-6 space-y-6">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+              <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-gift text-amber-600 mr-2"></i>Received Gifts & RSVPs</h2>
+              <span class="bg-amber-100 text-amber-800 font-extrabold text-xs px-2.5 py-1 rounded-full">Total: $850.00</span>
+            </div>
+
+            <!-- List of Guest Contributions -->
+            <div class="space-y-3">
+              <!-- Item 1 -->
+              <div class="p-4 border border-slate-200 rounded-xl flex items-center justify-between bg-slate-50">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-900 text-sm">Elena Rostova</span>
+                    <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Attending</span>
+                  </div>
+                  <p class="text-xs text-slate-500 italic">"Wishing you endless happiness together!"</p>
+                  <p class="text-[11px] text-amber-700 font-semibold">Gift Amount: $250.00</p>
+                </div>
+                <div>
+                  <button onclick="openAckModal('Elena Rostova')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-2 px-3 rounded-lg shadow-sm">
+                    Send Thank You E-Card
+                  </button>
+                </div>
+              </div>
+
+              <!-- Item 2 -->
+              <div class="p-4 border border-slate-200 rounded-xl flex items-center justify-between bg-slate-50">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-900 text-sm">Carlos Mendez</span>
+                    <span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Unabl to Attend</span>
+                  </div>
+                  <p class="text-xs text-slate-500 italic">"Sorry I can't make it! Enjoy your special day!"</p>
+                  <p class="text-[11px] text-amber-700 font-semibold">Gift Amount: $100.00</p>
+                </div>
+                <div>
+                  <span class="text-xs font-bold text-emerald-600 flex items-center gap-1">
+                    <i class="fa-solid fa-check"></i> Thanked
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 3: CARD MARKETPLACE (FOR SELLERS) -->
+    <div id="content-seller" class="tab-content space-y-6">
+      <div class="grid lg:grid-cols-12 gap-8">
+        
+        <!-- Seller Upload Form -->
+        <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+          <div class="border-b pb-3">
+            <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-cloud-arrow-up text-amber-600 mr-2"></i>Card Seller Portal</h2>
+            <p class="text-xs text-slate-500 mt-1">Upload digital E-cards and sell them to event guests. Unabl charges an 8% processing fee on card sales.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">E-Card Title</label>
+            <input type="text" placeholder="e.g. Golden Floral Celebration" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Category</label>
+              <select class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                <option>Wedding</option>
+                <option>Birthday</option>
+                <option>Anniversary</option>
+                <option>Graduation</option>
+                <option>Sweet 16</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Card Price ($)</label>
+              <input type="number" step="0.50" value="2.50" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Upload Digital Card Artwork (SVG/PNG)</label>
+            <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer hover:bg-slate-50">
+              <i class="fa-solid fa-image text-3xl text-slate-400 mb-2"></i>
+              <p class="text-xs text-slate-600 font-semibold">Click or drag image file here</p>
+              <p class="text-[10px] text-slate-400 mt-1">Recommended size: 1200x800px</p>
+            </div>
+          </div>
+
+          <div class="bg-slate-50 p-3 rounded-xl text-xs space-y-1 text-slate-600">
+            <div class="flex justify-between">
+              <span>Card Sale Price:</span>
+              <span class="font-bold">$2.50</span>
+            </div>
+            <div class="flex justify-between text-slate-500">
+              <span>Unabl Seller Fee (8%):</span>
+              <span>-$0.20</span>
+            </div>
+            <div class="border-t border-slate-200 pt-1 flex justify-between font-bold text-slate-900">
+              <span>Your Net Earnings per Sale:</span>
+              <span class="text-emerald-600">$2.30</span>
+            </div>
+          </div>
+
+          <button onclick="alert('Card successfully submitted for marketplace review!')" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl transition">
+            Publish Card to Marketplace
+          </button>
+        </div>
+
+        <!-- Marketplace Cards Catalog -->
+        <div class="lg:col-span-7 space-y-4">
+          <h2 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-store text-amber-600 mr-2"></i>Active Marketplace E-Cards</h2>
+          
+          <div class="grid sm:grid-cols-2 gap-4">
+            <!-- Card Item 1 -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+              <div class="h-32 bg-gradient-to-tr from-pink-400 to-rose-500 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-inner">
+                Floral Elegance
+              </div>
+              <div class="flex justify-between items-center">
+                <div>
+                  <h3 class="font-bold text-slate-900 text-sm">Floral Elegance</h3>
+                  <p class="text-xs text-slate-500">By Studio Luxe</p>
+                </div>
+                <span class="text-sm font-extrabold text-amber-600">$2.50</span>
+              </div>
+              <div class="text-[11px] text-slate-500 flex justify-between border-t pt-2">
+                <span>Category: Wedding</span>
+                <span class="font-semibold text-emerald-600">142 Sales</span>
+              </div>
+            </div>
+
+            <!-- Card Item 2 -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+              <div class="h-32 bg-gradient-to-tr from-amber-400 to-amber-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-inner">
+                Royal Gold
+              </div>
+              <div class="flex justify-between items-center">
+                <div>
+                  <h3 class="font-bold text-slate-900 text-sm">Royal Gold</h3>
+                  <p class="text-xs text-slate-500">By PaperArt Co.</p>
+                </div>
+                <span class="text-sm font-extrabold text-amber-600">$3.00</span>
+              </div>
+              <div class="text-[11px] text-slate-500 flex justify-between border-t pt-2">
+                <span>Category: Anniversary</span>
+                <span class="font-semibold text-emerald-600">89 Sales</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Host Thank You E-Card Modal -->
+  <div id="ackModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="text-lg font-bold text-slate-900">Send Thank You E-Card</h3>
+        <button onclick="closeAckModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+
+      <p class="text-xs text-slate-600">Acknowledge <strong id="ackGuestName">Guest</strong>'s gift with a personal thank you card sent directly to their email/SMS.</p>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Select Thank You Card Design</label>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="border-2 border-amber-500 rounded-lg p-2 bg-amber-50 text-center text-xs font-bold text-amber-900 cursor-pointer">
+            Golden Thank You
+          </div>
+          <div class="border border-slate-200 rounded-lg p-2 bg-white text-center text-xs font-bold text-slate-700 cursor-pointer hover:border-slate-300">
+            Warm Heart
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Personal Message</label>
+        <textarea rows="3" class="w-full p-2.5 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">Thank you so much for your generous gift and thoughtful wishes! It means the world to us.</textarea>
+      </div>
+
+      <button onclick="sendAckCard()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl shadow transition">
+        Send Thank You E-Card
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 mt-auto py-6">
+    <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+      <p class="text-xs text-slate-500">&copy; 2026 Unabl.app. All rights reserved. Seamless social celebrations & direct monetary gifting.</p>
+      <div class="flex justify-center gap-4 text-xs text-slate-400">
+        <a href="#" class="hover:underline">Privacy Policy</a>
+        <span>•</span>
+        <a href="#" class="hover:underline">Terms of Service</a>
+        <span>•</span>
+        <a href="#" class="hover:underline">Stripe Security</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Embedded JavaScript Logic -->
+  <script>
+    // Internationalization Strings Dictionary
+    const i18n = {
+      en: {
+        hero_title: "Received an Invite?",
+        hero_sub: "Enter the event hashtag below to confirm attendance, send a custom E-card, and give a monetary blessing directly to the host.",
+        find_btn: "Find"
+      },
+      es: {
+        hero_title: "¿Recibiste una invitación?",
+        hero_sub: "Ingresa el hashtag del evento a continuación para confirmar asistencia, enviar una tarjeta digital y dar un regalo monetario al anfitrión.",
+        find_btn: "Buscar"
+      },
+      hi: {
+        hero_title: "क्या आपको निमंत्रण मिला है?",
+        hero_sub: "उपस्थिति की पुष्टि करने, ई-कार्ड भेजने और मेजबान को उपहार देने के लिए नीचे इवेंट हैशटैग दर्ज करें।",
+        find_btn: "खोजें"
+      },
+      pa: {
+        hero_title: "ਕੀ ਤੁਹਾਨੂੰ ਸੱਦਾ ਮਿਲਿਆ ਹੈ?",
+        hero_sub: "ਹਾਜ਼ਰੀ ਦੀ ਪੁਸ਼ਟੀ ਕਰਨ, ਈ-ਕਾਰਡ ਭੇਜਣ ਅਤੇ ਮੇਜ਼ਬਾਨ ਨੂੰ ਤੋਹਫ਼ਾ ਦੇਣ ਲਈ ਹੇਠਾਂ ਹੈਸ਼ਟੈਗ ਦਰਜ ਕਰੋ।",
+        find_btn: "ਲੱਭੋ"
+      },
+      fa: {
+        hero_title: "دعوت‌نامه دریافت کرده‌اید؟",
+        hero_sub: "هشتگ رویداد را در زیر وارد کنید تا حضور خود را تایید کرده و هدیه ارسال کنید.",
+        find_btn: "جستجو"
+      },
+      ar: {
+        hero_title: "هل تلقيت دعوة؟",
+        hero_sub: "أدخل الهاشتاج الخاص بالمناسبة أدناه لتأكيد الحضور وإرسال بطاقة تهنئة وهدية مالية للمضيف.",
+        find_btn: "بحث"
+      },
+      ru: {
+        hero_title: "Получили приглашение?",
+        hero_sub: "Введите хэштег мероприятия ниже, чтобы подтвердить присутствие и отправить денежный подарок.",
+        find_btn: "Найти"
+      },
+      pt: {
+        hero_title: "Recebeu um convite?",
+        hero_sub: "Digite a hashtag do evento abaixo para confirmar presença e enviar um presente em dinheiro.",
+        find_btn: "Buscar"
+      }
+    };
+
+    // Geolocation Setup
+    window.addEventListener('DOMContentLoaded', () => {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            document.getElementById('geoText').innerText = `Near ${pos.coords.latitude.toFixed(2)}, ${pos.coords.longitude.toFixed(2)}`;
+          },
+          () => {
+            document.getElementById('geoText').innerText = "Location active";
+          }
+        );
+      } else {
+        document.getElementById('geoText').innerText = "Global Access";
+      }
+      calculateFees(100);
+    });
+
+    // Language Change Logic with RTL Support
+    function changeLanguage(lang) {
+      const isRTL = ['ar', 'fa'].includes(lang);
+      if (isRTL) {
+        document.body.classList.add('rtl-layout');
+      } else {
+        document.body.classList.remove('rtl-layout');
+      }
+
+      const translations = i18n[lang] || i18n.en;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[key]) {
+          el.innerText = translations[key];
+        }
+      });
+    }
+
+    // Switch Top Tabs
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('text-amber-600', 'bg-amber-50', 'shadow-sm');
+        btn.classList.add('text-slate-600');
+      });
+
+      document.getElementById(`content-${tab}`).classList.add('active');
+      const activeBtn = document.getElementById(`tab-${tab}`);
+      activeBtn.classList.add('text-amber-600', 'bg-amber-50', 'shadow-sm');
+      activeBtn.classList.remove('text-slate-600');
+    }
+
+    // RSVP Selection Logic
+    function setRSVP(type) {
+      const btnAttending = document.getElementById('rsvp-attending');
+      const btnUnabl = document.getElementById('rsvp-unabl');
+
+      if (type === 'attending') {
+        btnAttending.className = "rsvp-opt py-3 px-4 border-2 border-amber-500 bg-amber-50 text-amber-900 font-bold rounded-xl flex items-center justify-center gap-2 text-sm";
+        btnUnabl.className = "rsvp-opt py-3 px-4 border-2 border-slate-200 bg-white text-slate-600 font-bold rounded-xl flex items-center justify-center gap-2 text-sm hover:border-slate-300";
+      } else {
+        btnUnabl.className = "rsvp-opt py-3 px-4 border-2 border-rose-500 bg-rose-50 text-rose-900 font-bold rounded-xl flex items-center justify-center gap-2 text-sm";
+        btnAttending.className = "rsvp-opt py-3 px-4 border-2 border-slate-200 bg-white text-slate-600 font-bold rounded-xl flex items-center justify-center gap-2 text-sm hover:border-slate-300";
+      }
+    }
+
+    // E-Card Selection
+    function selectCard(el, cardName) {
+      document.querySelectorAll('.card-select').forEach(card => {
+        card.classList.remove('border-amber-500', 'bg-amber-50');
+        card.classList.add('border-slate-200', 'bg-white');
+      });
+      el.classList.add('border-amber-500', 'bg-amber-50');
+      el.classList.remove('border-slate-200', 'bg-white');
+    }
+
+    // Gift Amount Calculation
+    function setGiftAmount(val) {
+      document.getElementById('customGift').value = val;
+      calculateFees(val);
+    }
+
+    function calculateFees(val) {
+      let amount = parseFloat(val);
+      if (isNaN(amount) || amount < 10) amount = 10;
+      if (amount > 1000) amount = 1000;
+
+      const unablFee = amount * 0.02;
+      const stripeFee = (amount * 0.029) + 0.30;
+      const total = amount + unablFee + stripeFee;
+
+      document.getElementById('breakdownGift').innerText = `$${amount.toFixed(2)}`;
+      document.getElementById('breakdownUnabl').innerText = `$${unablFee.toFixed(2)}`;
+      document.getElementById('breakdownStripe').innerText = `$${stripeFee.toFixed(2)}`;
+      document.getElementById('breakdownTotal').innerText = `$${total.toFixed(2)}`;
+      document.getElementById('btnPayTotal').innerText = `$${total.toFixed(2)}`;
+    }
+
+    // Search Event Demo
+    function searchEvent() {
+      const tag = document.getElementById('searchHashtag').value.trim();
+      if (tag) {
+        document.getElementById('displayHashtag').innerText = `#${tag.replace('#', '')}`;
+        document.getElementById('eventTitle').innerText = `${tag.replace('#', '')} Celebration`;
+      }
+    }
+
+    // Mock Checkout Action
+    function processCheckout() {
+      alert("Redirecting to secure Stripe Checkout... Thank you for blessing the host!");
+    }
+
+    // Host Acknowledgment Modal
+    function openAckModal(name) {
+      document.getElementById('ackGuestName').innerText = name;
+      document.getElementById('ackModal').classList.remove('hidden');
+      document.getElementById('ackModal').classList.add('flex');
+    }
+
+    function closeAckModal() {
+      document.getElementById('ackModal').classList.add('hidden');
+      document.getElementById('ackModal').classList.remove('flex');
+    }
+
+    function sendAckCard() {
+      alert("Thank You E-Card sent to guest!");
+      closeAckModal();
+    }
+
+    function saveEvent() {
+      const hashtag = document.getElementById('newHashtagInput').value;
+      if (!hashtag) {
+        alert("Please specify a hashtag ID for your event.");
+        return;
+      }
+      alert(`Event created successfully! Your event hashtag is #${hashtag}. You can now send invitations via SMS or Email outside Unabl.app.`);
+    }
+  </script>
+</body>
+</html>
