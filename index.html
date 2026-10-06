@@ -76,20 +76,12 @@
   </header>
 
 <dialog class="ecard-dialog" id="ecardDialog" aria-labelledby="ecardDialogTitle"><div class="ecard-dialog-head"><h2 id="ecardDialogTitle">Create your e-card</h2><button type="button" onclick="document.getElementById('ecardDialog').close()">Close</button></div><iframe id="ecardEditor" title="Personalized e-card editor"></iframe></dialog>
-  <section class="max-w-7xl mx-auto w-full p-4" aria-labelledby="account-title"><h2 id="account-title" class="text-xl font-bold">Your Unabl account</h2><form id="account-form" class="grid sm:grid-cols-2 gap-3 mt-3"><label>Name<input id="account-name" maxlength="100" class="block w-full border rounded p-2" autocomplete="name"></label><label>Email<input id="account-email" type="email" required class="block w-full border rounded p-2" autocomplete="email"></label><label>Password<input id="account-password" type="password" minlength="8" required class="block w-full border rounded p-2" autocomplete="current-password"></label><label>Account type<select id="account-kind" class="block w-full border rounded p-2"><option value="user">User / guest</option><option value="creator">Event creator</option></select></label><button type="submit" class="bg-amber-700 text-white p-2 rounded">Sign in</button><button type="button" id="account-signup" class="border p-2 rounded">Create account</button></form><div id="account-signed-in" hidden><span id="account-user"></span> <button id="account-signout" type="button" class="border p-2 rounded">Sign out</button></div><p id="account-status" role="status" aria-live="polite" class="mt-2"></p><div id="my-events" class="mt-3"></div></section>
+  
 <!-- Main Container -->
   <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
 
-    <section class="ecard-options" aria-labelledby="ecard-heading">
-      <h1 id="ecard-heading">Send a card with Gift</h1>
-      <p>Write a personal message, close your card, and let them tap to open it. Add an optional monetary gift.</p>
-      <div class="ecard-grid">
-        <article class="ecard-choice"><div class="ecard-sample" aria-label="Standard card preview"><span aria-hidden="true">✦</span><span class="greeting">Thinking of you</span><span>A card just for you</span></div><h2>Standard e-card · $2.99</h2><p>Personal message with Roman Gothic style lettering.</p><button type="button" onclick="openEcard(false)">Send a card with Gift · $2.99</button></article>
-        <article class="ecard-choice"><div class="ecard-sample gold" aria-label="Gold portrait frame card preview"><span class="greeting">With love</span><span>Today and always</span></div><h2>Gold portrait frame · $4.95</h2><p>A gold frame with Roman Gothic style lettering. $4.95 total for the card.</p><button type="button" onclick="openEcard(true)">Send a card with Gift · $4.95</button></article>
-      </div>
-      <p style="font-size:14px;margin:16px 0 0">Monetary gifts are added separately. Payment collection and gift delivery are coming soon.</p>
-    </section>
+
 
     <!-- Role Switcher Tabs -->
     <div class="flex border-b border-slate-200 mb-6 bg-white p-1 rounded-xl shadow-sm border">
@@ -249,6 +241,15 @@
           </button>
         </div>
       </div>
+    <section class="ecard-options" aria-labelledby="ecard-heading">
+      <h2 id="ecard-heading" style="font-size:clamp(28px,4vw,42px);font-weight:800;line-height:1.2;margin-bottom:12px">Send a Gift Card</h2>
+      <p>Write a personal message, close your card, and let them tap to open it. Add an optional monetary gift.</p>
+      <div class="ecard-grid">
+        <article class="ecard-choice"><div class="ecard-sample" aria-label="Standard card preview"><span aria-hidden="true">✦</span><span class="greeting">Thinking of you</span><span>A card just for you</span></div><h2>Standard e-card · $2.99</h2><p>Personal message with Roman Gothic style lettering.</p><button type="button" onclick="openEcard(false)">Send a Gift Card · $2.99</button></article>
+        <article class="ecard-choice"><div class="ecard-sample gold" aria-label="Gold portrait frame card preview"><span class="greeting">With love</span><span>Today and always</span></div><h2>Gold portrait frame · $4.95</h2><p>A gold frame with Roman Gothic style lettering. $4.95 total for the card.</p><button type="button" onclick="openEcard(true)">Send a Gift Card · $4.95</button></article>
+      </div>
+      <p style="font-size:14px;margin:16px 0 0">Monetary gifts are added separately. Payment collection and gift delivery are coming soon.</p>
+    </section>
     </div>
 
     <!-- TAB 2: HOST / CREATE & ACKNOWLEDGE -->
@@ -469,6 +470,7 @@
     </div>
 
   </main>
+<section class="max-w-7xl mx-auto w-full p-4" aria-labelledby="account-title"><h2 id="account-title" class="text-xl font-bold">Your Unabl account</h2><form id="account-form" class="grid sm:grid-cols-2 gap-3 mt-3"><label>Name<input id="account-name" maxlength="100" class="block w-full border rounded p-2" autocomplete="name"></label><label>Email<input id="account-email" type="email" required class="block w-full border rounded p-2" autocomplete="email"></label><label>Password<input id="account-password" type="password" minlength="8" required class="block w-full border rounded p-2" autocomplete="current-password"></label><label>Account type<select id="account-kind" class="block w-full border rounded p-2"><option value="user">User / guest</option><option value="creator">Event creator</option></select></label><button type="submit" class="bg-amber-700 text-white p-2 rounded">Sign in</button><button type="button" id="account-signup" class="border p-2 rounded">Create account</button></form><div id="account-signed-in" hidden><span id="account-user"></span> <button id="account-signout" type="button" class="border p-2 rounded">Sign out</button></div><p id="account-status" role="status" aria-live="polite" class="mt-2"></p><div id="my-events" class="mt-3"></div></section>
 
   <!-- Host Thank You E-Card Modal -->
   <div id="ackModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
