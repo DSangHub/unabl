@@ -14,9 +14,33 @@ async function myEvents(){
  if(data.length){const heading=document.createElement('h3');heading.textContent='Your saved events';heading.className='font-bold';$('my-events').append(heading);}
  for(const event of data){const row=document.createElement('p');row.textContent=event.title+' — #'+event.hashtag+' — '+new Date(event.starts_at).toLocaleString();$('my-events').append(row);}
 }
-async function sync(session){user=session?.user||null;$('account-form').hidden=!!user;$('account-signed-in').hidden=!user;if(user){$('account-user').textContent='Signed in as '+user.email;try{await profile();await myEvents();status('Your account is connected.');}catch(e){status(e.message);}}else{$('my-events').replaceChildren();status('Sign in to save your profile, RSVP, or event.');}}
-$('account-form').addEventListener('submit',async e=>{e.preventDefault();status('Signing in…');const {data,error}=await db.auth.signInWithPassword({email:$('account-email').value.trim(),password:$('account-password').value});if(error){status(error.message);return;}$('account-password').value='';await sync(data.session);});
-$('account-signup').addEventListener('click',async()=>{if(!$('account-form').reportValidity())return;const name=$('account-name').value.trim();if(!name){status('Enter your name to create an account.');return;}status('Creating account…');const {data,error}=await db.auth.signUp({email:$('account-email').value.trim(),password:$('account-password').value,options:{emailRedirectTo:'https://www.unabl.app/',data:{display_name:name,account_kind:$('account-kind').value}}});if(error){status(error.message);return;}$('account-password').value='';if(data.session)await sync(data.session);else status('Check your email to confirm your account, then sign in here.');});
+async function sync(session){user=session?.user||null;$('account-form').hidden=!!user;$('account-modes').hidden=!!user;$('header-signin').textContent=user?'My account':'Sign in';$('header-signup').hidden=!!user;$('account-signed-in').hidden=!user;if(user){$('account-user').textContent='Signed in as '+user.email;try{await profile();await myEvents();status('Your account is connected.');}catch(e){status(e.message);}}else{$('my-events').replaceChildren();status('Sign in to save your profile, RSVP, or event.');}}
+let accountMode='signin';
+function setAccountMode(mode){
+ accountMode=mode;const signup=mode==='signup';
+ $('account-title').textContent=signup?'Sign up for Unabl':'Sign in to Unabl';
+ $('account-description').textContent=signup?'Create your account to send cards, RSVP, or host events.':'Welcome back. Sign in to save your RSVP, cards, and events.';
+ $('account-name-field').hidden=!signup;$('account-kind-field').hidden=!signup;$('account-password-help').hidden=!signup;
+ $('account-name').required=signup;$('account-password').minLength=signup?8:1;
+ $('account-password').autocomplete=signup?'new-password':'current-password';
+ $('account-submit').textContent=signup?'Create account':'Sign in';
+ $('account-mode-signin').setAttribute('aria-pressed',String(!signup));$('account-signup').setAttribute('aria-pressed',String(signup));
+ status(signup?'Choose User / guest or Event creator.':'Enter your email and password.');
+}
+$('account-mode-signin').addEventListener('click',()=>setAccountMode('signin'));
+$('account-signup').addEventListener('click',()=>setAccountMode('signup'));
+$('header-signin').addEventListener('click',()=>setAccountMode('signin'));
+$('header-signup').addEventListener('click',()=>setAccountMode('signup'));
+$('account-form').addEventListener('submit',async e=>{
+ e.preventDefault();const button=$('account-submit');button.disabled=true;
+ const signup=accountMode==='signup';status(signup?'Creating account…':'Signing in…');
+ try{
+ const credentials={email:$('account-email').value.trim(),password:$('account-password').value};
+ const {data,error}=signup?await db.auth.signUp({...credentials,options:{emailRedirectTo:'https://www.unabl.app/',data:{display_name:$('account-name').value.trim(),account_kind:$('account-kind').value}}}):await db.auth.signInWithPassword(credentials);
+ if(error)throw error;$('account-password').value='';
+ if(data.session)await sync(data.session);else status('Check your email to confirm your account, then sign in here.');
+ }catch(error){status(error.message||'Unable to connect. Please try again.');}finally{button.disabled=false;}
+});
 $('account-signout').addEventListener('click',async()=>{const {error}=await db.auth.signOut();if(error)status(error.message);else await sync(null);});
 const oldRSVP=window.setRSVP;window.setRSVP=type=>{attendance=type;oldRSVP(type);};
 window.saveEvent=async()=>{if(!user){status('Sign in or create an event creator account first.');$('account-email').focus();return;}const title=$('event-title-input').value.trim(),hashtag=$('newHashtagInput').value.trim().replace(/^#/,'').toLowerCase(),venue=$('event-venue').value.trim(),start=$('event-starts').value;if(!title||!venue||!start||!(/^[a-z0-9_]{3,60}$/).test(hashtag)){status('Enter an event title, venue, date/time, and a hashtag with 3–60 letters, numbers, or underscores.');return;}const button=$('event-save');button.disabled=true;try{const {data:creator,error:ce}=await db.from('event_creators').select('user_id').eq('user_id',user.id).maybeSingle();if(ce)throw ce;if(!creator)throw Error('This account is a guest account. Create an event creator account to publish events.');const {error}=await db.from('events').insert({creator_id:user.id,title,category:$('eventCatInput').value,hashtag,starts_at:new Date(start).toISOString(),venue,published:true});if(error)throw error;status('Event published. Share the hashtag #'+hashtag+'.');await myEvents();}catch(e){status(e.code==='23505'?'That hashtag is already in use. Choose another.':e.message);}finally{button.disabled=false;}};
