@@ -41,7 +41,7 @@
 
   <!-- Header / Navigation -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-3 flex flex-wrap gap-3 items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="bg-gradient-to-tr from-amber-500 to-violet-600 text-white font-black text-xl p-2 rounded-xl tracking-wider">
           UB
@@ -53,7 +53,9 @@
       </div>
 
       <!-- Language Switcher & Geo Indicator -->
-      <div class="flex items-center gap-3">
+      <div class="flex items-center flex-wrap gap-2">
+        <a id="header-signin" href="#account" class="text-sm font-semibold text-amber-800 px-2 py-2">Sign in</a>
+        <a id="header-signup" href="#account" class="bg-amber-700 text-white text-sm font-semibold px-3 py-2 rounded-lg">Sign up</a>
         <div id="geoBadge" class="hidden sm:flex items-center gap-1.5 bg-slate-100 text-slate-600 text-xs px-3 py-1.5 rounded-full border border-slate-200">
           <i class="fa-solid fa-location-dot text-amber-500"></i>
           <span id="geoText">Detecting Location...</span>
@@ -123,7 +125,7 @@
           <div class="inline-block bg-violet-100 text-violet-700 font-semibold text-xs px-3 py-1 rounded-full uppercase tracking-wider" id="eventCategory">
             Wedding Celebration
           </div>
-          <h2 class="text-2xl font-bold text-slate-900" id="eventTitle">Maya & Raj's Wedding</h2>
+          <h2 class="text-2xl font-bold text-slate-900" id="eventTitle">Maya & Raj's Wedding</h2><span id="creator-badge" class="inline-block mt-2 text-sm text-slate-500">Sample event · not verified</span>
           <p class="text-xs text-amber-600 font-bold tracking-wide" id="displayHashtag">#MayaAndRaj2026</p>
           
           <div class="space-y-3 text-sm text-slate-600 pt-2">
@@ -236,9 +238,17 @@
 
           <button id="rsvp-save" type="button" class="w-full border border-amber-700 text-amber-800 font-bold p-3 rounded-xl">Save RSVP & message</button><p id="event-status" role="status" aria-live="polite"></p>
 <!-- Submit Button -->
-          <button onclick="processCheckout()" class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-extrabold py-3.5 rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-lock"></i> Send Blessing & Pay <span id="btnPayTotal">$105.20</span>
-          </button>
+          <button type="button" disabled class="w-full bg-slate-200 text-slate-600 font-bold py-3 rounded-xl">Gift payments coming soon<span id="btnPayTotal" hidden>$105.20</span></button>
+          <p class="text-sm text-slate-500">When payments launch, gifts will be held for at least five days after successful payment and released only after the creator passes verification.</p>
+          <div class="border border-amber-200 bg-amber-50 rounded-xl p-4 mt-4">
+            <h3 class="font-bold">Creator verification &amp; gift protection</h3>
+            <p id="creator-trust-detail" class="text-sm mt-2">Find a published event to see its creator’s verification status.</p>
+            <button id="vouch-creator" type="button" class="border border-amber-700 rounded-lg p-2 mt-3">I know this creator — vouch</button>
+            <button id="withdraw-vouch" type="button" class="border rounded-lg p-2 mt-3">Withdraw my vouch</button>
+            <p class="text-xs text-slate-600 mt-2">Only gift givers with a successful payment can vouch. Each person counts once. Creators cannot vouch for themselves.</p>
+            <form id="fraud-report-form" class="mt-4"><label class="block text-sm font-semibold" for="fraud-reason">Report a suspicious event</label><textarea id="fraud-reason" required minlength="10" maxlength="2000" class="w-full border rounded-lg p-2 mt-1" placeholder="Describe your concern (at least 10 characters)"></textarea><button type="submit" class="border rounded-lg p-2">Submit report</button></form>
+            <p id="trust-action-status" role="status" aria-live="polite" class="text-sm mt-2"></p>
+          </div>
         </div>
       </div>
     <section class="ecard-options" aria-labelledby="ecard-heading">
@@ -470,7 +480,21 @@
     </div>
 
   </main>
-<section class="max-w-7xl mx-auto w-full p-4" aria-labelledby="account-title"><h2 id="account-title" class="text-xl font-bold">Your Unabl account</h2><form id="account-form" class="grid sm:grid-cols-2 gap-3 mt-3"><label>Name<input id="account-name" maxlength="100" class="block w-full border rounded p-2" autocomplete="name"></label><label>Email<input id="account-email" type="email" required class="block w-full border rounded p-2" autocomplete="email"></label><label>Password<input id="account-password" type="password" minlength="8" required class="block w-full border rounded p-2" autocomplete="current-password"></label><label>Account type<select id="account-kind" class="block w-full border rounded p-2"><option value="user">User / guest</option><option value="creator">Event creator</option></select></label><button type="submit" class="bg-amber-700 text-white p-2 rounded">Sign in</button><button type="button" id="account-signup" class="border p-2 rounded">Create account</button></form><div id="account-signed-in" hidden><span id="account-user"></span> <button id="account-signout" type="button" class="border p-2 rounded">Sign out</button></div><p id="account-status" role="status" aria-live="polite" class="mt-2"></p><div id="my-events" class="mt-3"></div></section>
+<section id="account" class="max-w-7xl mx-auto w-full p-4" style="scroll-margin-top:120px" aria-labelledby="account-title">
+<div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-8 max-w-xl mx-auto shadow-sm">
+<h2 id="account-title" class="text-2xl font-bold">Sign in to Unabl</h2>
+<p id="account-description" class="text-slate-600 mt-2">Welcome back. Sign in to save your RSVP, cards, and events.</p>
+<div id="account-modes" class="flex gap-2 mt-5" role="group" aria-label="Account access">
+<button id="account-mode-signin" type="button" aria-pressed="true" class="border border-amber-700 rounded-lg px-4 py-2 font-semibold">Sign in</button>
+<button id="account-signup" type="button" aria-pressed="false" class="border rounded-lg px-4 py-2 font-semibold">Sign up</button></div>
+<form id="account-form" class="grid gap-4 mt-5">
+<label id="account-name-field" hidden>Name<input id="account-name" maxlength="100" class="block w-full border rounded-lg p-3 mt-1" autocomplete="name"></label>
+<label>Email<input id="account-email" type="email" required class="block w-full border rounded-lg p-3 mt-1" autocomplete="email"></label>
+<label>Password<input id="account-password" type="password" required class="block w-full border rounded-lg p-3 mt-1" autocomplete="current-password"><span id="account-password-help" hidden class="text-sm text-slate-500">Use at least 8 characters.</span></label>
+<label id="account-kind-field" hidden>Account type<select id="account-kind" class="block w-full border rounded-lg p-3 mt-1"><option value="user">User / guest</option><option value="creator">Event creator</option></select></label>
+<button id="account-submit" type="submit" class="bg-amber-700 text-white p-3 rounded-lg font-semibold">Sign in</button></form>
+<div id="account-signed-in" hidden class="mt-4"><span id="account-user"></span> <button id="account-signout" type="button" class="border p-2 rounded-lg">Sign out</button></div>
+<p id="account-status" role="status" aria-live="polite" class="mt-3 text-sm"></p><div id="creator-verification-panel" hidden class="border border-amber-200 bg-amber-50 rounded-xl p-4 mt-4"><h3 class="font-bold">★ Event creator verification</h3><p class="text-sm mt-2">Get identity approval and vouches from three different paid gift givers to qualify for a verified star. Unresolved fraud reports block release.</p><p class="text-sm mt-2">Gifts have a minimum five-day hold from successful payment. Verification, payment clearance, and review can take longer. Payments are not live yet.</p><p id="verification-progress" class="text-sm mt-2"></p><button id="request-verification" type="button" class="bg-amber-700 text-white rounded-lg p-2 mt-3">Request verification</button><p class="text-xs text-slate-500 mt-2">Do not upload ID documents here. Identity checks will use secure Stripe onboarding when it is connected.</p></div><div id="my-events" class="mt-3"></div></div></section>
 
   <!-- Host Thank You E-Card Modal -->
   <div id="ackModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
