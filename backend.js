@@ -79,3 +79,10 @@ $('vouch-creator').addEventListener('click',async()=>{
 });
 $('withdraw-vouch').addEventListener('click',async()=>{if(!user||!selectedEvent){trustStatus('Sign in and find a published event first.');return;}const {error}=await db.from('creator_vouches').delete().eq('creator_id',selectedEvent.creator_id).eq('donor_id',user.id);trustStatus(error?error.message:'Your vouch has been withdrawn.');if(!error)await refreshTrust();});
 $('fraud-report-form').addEventListener('submit',async e=>{e.preventDefault();if(!user||!selectedEvent){trustStatus('Sign in and find a published event before reporting it.');return;}const {error}=await db.from('event_fraud_reports').insert({event_id:selectedEvent.id,reporter_id:user.id,reason:$('fraud-reason').value.trim()});trustStatus(error?error.message:'Report saved for review. Unresolved reports block gift release.');if(!error){$('fraud-reason').value='';await refreshTrust();}});
+
+$('promotion-form').addEventListener('submit',async e=>{
+ e.preventDefault();const message=$('promotion-status');
+ if(!user){message.textContent='Sign up or sign in to save your promotion draft.';return;}
+ const button=e.currentTarget.querySelector('button[type="submit"]');button.disabled=true;
+ try{const {error}=await db.from('event_promotion_drafts').insert({user_id:user.id,display_name:$('promo-name').value.trim(),event_type:$('promo-type').value,event_date:$('promo-date').value,chosen_location:$('promo-location').value.trim()});if(error)throw error;message.textContent='Draft saved. Price: $29.95 for seven days. No payment collected; your promotion is not published yet.';}catch(error){message.textContent=error.message||'Unable to save. Please try again.';}finally{button.disabled=false;}
+});
