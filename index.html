@@ -75,7 +75,8 @@
   </header>
 
 <dialog class="ecard-dialog" id="ecardDialog" aria-labelledby="ecardDialogTitle"><div class="ecard-dialog-head"><h2 id="ecardDialogTitle">Create your e-card</h2><button type="button" onclick="document.getElementById('ecardDialog').close()">Close</button></div><iframe id="ecardEditor" title="Personalized e-card editor"></iframe></dialog>
-  <!-- Main Container -->
+  <section class="max-w-7xl mx-auto w-full p-4" aria-labelledby="account-title"><h2 id="account-title" class="text-xl font-bold">Your Unabl account</h2><form id="account-form" class="grid sm:grid-cols-2 gap-3 mt-3"><label>Name<input id="account-name" maxlength="100" class="block w-full border rounded p-2" autocomplete="name"></label><label>Email<input id="account-email" type="email" required class="block w-full border rounded p-2" autocomplete="email"></label><label>Password<input id="account-password" type="password" minlength="8" required class="block w-full border rounded p-2" autocomplete="current-password"></label><label>Account type<select id="account-kind" class="block w-full border rounded p-2"><option value="user">User / guest</option><option value="creator">Event creator</option></select></label><button type="submit" class="bg-amber-700 text-white p-2 rounded">Sign in</button><button type="button" id="account-signup" class="border p-2 rounded">Create account</button></form><div id="account-signed-in" hidden><span id="account-user"></span> <button id="account-signout" type="button" class="border p-2 rounded">Sign out</button></div><p id="account-status" role="status" aria-live="polite" class="mt-2"></p><div id="my-events" class="mt-3"></div></section>
+<!-- Main Container -->
   <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
 
@@ -240,7 +241,8 @@
             </div>
           </div>
 
-          <!-- Submit Button -->
+          <button id="rsvp-save" type="button" class="w-full border border-amber-700 text-amber-800 font-bold p-3 rounded-xl">Save RSVP & message</button><p id="event-status" role="status" aria-live="polite"></p>
+<!-- Submit Button -->
           <button onclick="processCheckout()" class="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-extrabold py-3.5 rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2">
             <i class="fa-solid fa-lock"></i> Send Blessing & Pay <span id="btnPayTotal">$105.20</span>
           </button>
@@ -271,7 +273,7 @@
 
           <div>
             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Event Title</label>
-            <input type="text" placeholder="e.g. Sophia's Sweet 16 Bash" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            <input type="text" id="event-title-input" placeholder="e.g. Sophia's Sweet 16 Bash" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
           </div>
 
           <div>
@@ -286,11 +288,11 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Date & Time</label>
-              <input type="datetime-local" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              <input id="event-starts" type="datetime-local" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Location / Venue</label>
-              <input type="text" placeholder="City or Venue Name" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              <input type="text" id="event-venue" placeholder="City or Venue Name" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
             </div>
           </div>
 
@@ -301,7 +303,7 @@
             </button>
           </div>
 
-          <button onclick="saveEvent()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition">
+          <button id="event-save" onclick="saveEvent()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition">
             Publish Event & Generate Invitations
           </button>
         </div>
@@ -656,7 +658,7 @@
     }
 
     // Search Event Demo
-    function searchEvent() {
+    function searchEvent() { alert("Event connection is loading. Please try again shortly."); return;
       const tag = document.getElementById('searchHashtag').value.trim();
       if (tag) {
         document.getElementById('displayHashtag').innerText = `#${tag.replace('#', '')}`;
@@ -686,7 +688,7 @@
       closeAckModal();
     }
 
-    function saveEvent() {
+    function saveEvent() { alert("Sign in as an event creator to publish an event."); return;
       const hashtag = document.getElementById('newHashtagInput').value;
       if (!hashtag) {
         alert("Please specify a hashtag ID for your event.");
@@ -701,5 +703,6 @@ const ecardSource='PCFkb2N0eXBlIGh0bWw+CjxodG1sIGxhbmc9ImVuIj4KPGhlYWQ+CjxtZXRhI
 function openEcard(gold){let html=new TextDecoder().decode(Uint8Array.from(atob(ecardSource),c=>c.charCodeAt(0)));if(gold)html=html.replace('id="upgrade" type="checkbox"','id="upgrade" type="checkbox" checked');document.getElementById('ecardEditor').srcdoc=html;document.getElementById('ecardDialog').showModal();}
 if(location.hash.startsWith('#card=')){let html=new TextDecoder().decode(Uint8Array.from(atob(ecardSource),c=>c.charCodeAt(0)));html=html.replace('const hash=location.hash;', 'const hash=window.parent.location.hash;');document.getElementById('ecardEditor').srcdoc=html;document.getElementById('ecardDialog').showModal();}
 </script>
+<script type="module" src="./backend.js"></script>
 </body>
 </html>
