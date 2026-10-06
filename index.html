@@ -56,10 +56,10 @@
       <div class="flex items-center flex-wrap gap-2">
         <a id="header-signin" href="#account" class="text-sm font-semibold text-amber-800 px-2 py-2">Sign in</a>
         <a id="header-signup" href="#account" class="bg-amber-700 text-white text-sm font-semibold px-3 py-2 rounded-lg">Sign up</a>
-        <div id="geoBadge" class="hidden sm:flex items-center gap-1.5 bg-slate-100 text-slate-600 text-xs px-3 py-1.5 rounded-full border border-slate-200">
+        <button type="button" id="geoBadge" onclick="activateLocation()" title="Use your location on this device" class="flex items-center gap-1.5 bg-slate-100 text-slate-600 text-xs px-3 py-2 rounded-full border border-slate-200">
           <i class="fa-solid fa-location-dot text-amber-500"></i>
-          <span id="geoText">Detecting Location...</span>
-        </div>
+          <span id="geoText" role="status" aria-live="polite">Enable location</span>
+        </button>
 
         <div class="relative">
           <select id="langSelect" onchange="changeLanguage(this.value)" class="bg-slate-100 text-slate-700 text-xs sm:text-sm font-medium py-1.5 px-3 pr-8 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
@@ -589,21 +589,30 @@
       }
     };
 
-    // Geolocation Setup
-    window.addEventListener('DOMContentLoaded', () => {
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            document.getElementById('geoText').innerText = `Near ${pos.coords.latitude.toFixed(2)}, ${pos.coords.longitude.toFixed(2)}`;
-          },
-          () => {
-            document.getElementById('geoText').innerText = "Location active";
-          }
-        );
-      } else {
-        document.getElementById('geoText').innerText = "Global Access";
-      }
+    // Location stays on this device and is requested with browser permission.
+    let locationRequest=0;
+    window.unablLocation=null;
+    function activateLocation(){
+      const button=document.getElementById('geoBadge'),label=document.getElementById('geoText');
+      if(!navigator.geolocation){label.textContent='Location unsupported';return;}
+      if(!window.isSecureContext){label.textContent='Location needs HTTPS';return;}
+      const request=++locationRequest;
+      button.disabled=true;label.textContent='Finding location…';window.unablLocation=null;
+      navigator.geolocation.getCurrentPosition(pos=>{
+        if(request!==locationRequest)return;
+        window.unablLocation={latitude:pos.coords.latitude,longitude:pos.coords.longitude,accuracy:pos.coords.accuracy,timestamp:pos.timestamp};
+        label.textContent=`Location active · ${pos.coords.latitude.toFixed(2)}, ${pos.coords.longitude.toFixed(2)}`;
+        button.title='Refresh location · kept on this device';button.disabled=false;
+        window.dispatchEvent(new CustomEvent('unabl:location',{detail:window.unablLocation}));
+      },error=>{
+        if(request!==locationRequest)return;
+        label.textContent=error.code===1?'Location blocked · retry':error.code===3?'Location timed out · retry':'Location unavailable · retry';
+        button.title=error.code===1?'Allow location in your browser site settings, then retry':'Try detecting your location again';button.disabled=false;
+      },{enableHighAccuracy:false,timeout:15000,maximumAge:60000});
+    }
+    window.addEventListener('DOMContentLoaded',async()=>{
       calculateFees(100);
+      if(navigator.permissions){try{const permission=await navigator.permissions.query({name:'geolocation'});if(permission.state==='granted')activateLocation();permission.addEventListener('change',()=>{if(permission.state!=='granted'){locationRequest++;window.unablLocation=null;document.getElementById('geoBadge').disabled=false;document.getElementById('geoText').textContent=permission.state==='denied'?'Location blocked · retry':'Enable location';}});}catch{}}
     });
 
     // Language Change Logic with RTL Support
