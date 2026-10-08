@@ -102,7 +102,16 @@ $('gift-checkout').addEventListener('click',async()=>{
  window.location.assign(data.url);
  }catch(e){$('event-status').textContent=e.message;}finally{button.disabled=false;}
 });
-async function onboarding(action){const output=$('stripe-onboarding-status');try{output.textContent='Connecting to Stripe…';const data=await paymentRequest('/api/onboarding',{action});if(data.url)window.location.assign(data.url);else{output.textContent=data.message;await refreshCreatorPanel();}}catch(e){output.textContent=e.message;}}
+let onboardingPending=false;
+async function onboarding(action,output=$('stripe-onboarding-status'),button=$('stripe-onboarding')){
+ if(onboardingPending)return;onboardingPending=true;button.disabled=true;
+ try{
+ if(!user){output.textContent='Sign up or sign in as an Event creator to connect your bank with Stripe.';setAccountMode('signup');$('account-kind').value='creator';$('account-email').scrollIntoView({behavior:'smooth',block:'center'});$('account-email').focus();return;}
+ output.textContent='Connecting to Stripe…';const data=await paymentRequest('/api/onboarding',{action});
+ if(data.url)window.location.assign(data.url);else{output.textContent=data.message;await refreshCreatorPanel();}
+ }catch(e){output.textContent=e.message;}finally{onboardingPending=false;button.disabled=false;}
+}
+$('event-stripe-onboarding').addEventListener('click',()=>onboarding('start',$('event-stripe-status'),$('event-stripe-onboarding')));
 $('stripe-onboarding').addEventListener('click',()=>onboarding('start'));
 $('stripe-status').addEventListener('click',()=>onboarding('status'));
 const returnParams=new URLSearchParams(location.search);
