@@ -153,3 +153,15 @@ if(!location.hash||location.hash==='#gift-response'||returnParams.get('onboardin
  if(returnParams.get('onboarding')==='return')history.replaceState(null,'',location.pathname+location.search+'#gift-response');
  requestAnimationFrame(()=>giftResponse.scrollIntoView({block:'start',behavior:'instant'}));
 }
+
+const customGift=$('customGift');
+customGift.step='0.01';
+customGift.setAttribute('aria-label','Other monetary gift amount in dollars');
+customGift.placeholder='Enter amount, e.g. 10, 15, or 20';
+const giftOptions=document.querySelector('.gift-btn').parentElement;
+giftOptions.classList.replace('grid-cols-4','grid-cols-5');
+const otherGift=document.createElement('button');
+otherGift.type='button';otherGift.textContent='Other';otherGift.className=document.querySelector('.gift-btn').className;
+otherGift.setAttribute('aria-controls','customGift');
+otherGift.addEventListener('click',()=>{customGift.focus();customGift.select();});
+giftOptions.append(otherGift);
