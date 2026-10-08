@@ -58,7 +58,22 @@ $('account-form').addEventListener('submit',async e=>{
 });
 $('account-signout').addEventListener('click',async()=>{const {error}=await db.auth.signOut();if(error)status(error.message);else await sync(null);});
 const oldRSVP=window.setRSVP;window.setRSVP=type=>{attendance=type;oldRSVP(type);};
-window.saveEvent=async()=>{if(!user){status('Sign in or create an event creator account first.');$('account-email').focus();return;}const title=$('event-title-input').value.trim(),hashtag=$('newHashtagInput').value.trim().replace(/^#/,'').toLowerCase(),venue=$('event-venue').value.trim(),start=$('event-starts').value;if(!title||!venue||!start||!(/^[a-z0-9_]{3,60}$/).test(hashtag)){status('Enter an event title, venue, date/time, and a hashtag with 3–60 letters, numbers, or underscores.');return;}const button=$('event-save');button.disabled=true;try{const {data:creator,error:ce}=await db.from('event_creators').select('user_id').eq('user_id',user.id).maybeSingle();if(ce)throw ce;if(!creator)throw Error('This account is a guest account. Create an event creator account to publish events.');const {error}=await db.from('events').insert({creator_id:user.id,title,category:$('eventCatInput').value,hashtag,starts_at:new Date(start).toISOString(),venue,published:true});if(error)throw error;status('Event published. Share the hashtag #'+hashtag+'.');await myEvents();}catch(e){status(e.code==='23505'?'That hashtag is already in use. Choose another.':e.message);}finally{button.disabled=false;}};
+window.saveEvent=async()=>{
+ const output=$('event-publish-status'),button=$('event-save');$('event-invitation').hidden=true;
+ if(!user){output.textContent='Sign in to your confirmed Event creator account before publishing.';setAccountMode('signin');$('account-email').scrollIntoView({behavior:'smooth',block:'center'});$('account-email').focus();return;}
+ const title=$('event-title-input').value.trim(),hashtag=$('newHashtagInput').value.trim().replace(/^#/,'').toLowerCase(),venue=$('event-venue').value.trim(),start=$('event-starts').value;
+ if(!title||!venue||!start||!(/^[a-z0-9_]{3,60}$/).test(hashtag)){output.textContent='Enter a title, venue, date/time, and a hashtag with 3–60 letters, numbers, or underscores.';return;}
+ button.disabled=true;output.textContent='Publishing your event…';
+ try{
+ await profile();
+ const {data:creator,error:ce}=await db.from('event_creators').select('user_id').eq('user_id',user.id).maybeSingle();if(ce)throw ce;if(!creator)throw Error('This is a guest account. An Event creator account is required to publish.');
+ const {error}=await db.from('events').insert({creator_id:user.id,title,category:$('eventCatInput').value,hashtag,starts_at:new Date(start).toISOString(),venue,published:true});if(error)throw error;
+ output.textContent='Event published. Share your invitation link with friends and family.';
+ const link=new URL(location.origin+'/');link.searchParams.set('event',hashtag);$('event-invitation-link').value=link.href;$('event-invitation-preview').href=link.href;$('event-invitation').hidden=false;
+ await myEvents();await refreshCreatorPanel();
+ }catch(e){output.textContent=e.code==='23505'?'That hashtag is already in use. Choose another.':e.message;}finally{button.disabled=false;}
+};
+$('event-invitation-copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('event-invitation-link').value);$('event-publish-status').textContent='Invitation link copied. Paste it into your email or text message.';}catch{$('event-invitation-link').focus();$('event-invitation-link').select();$('event-publish-status').textContent='Select and copy your invitation link.';}});
 window.searchEvent=async()=>{const tag=$('searchHashtag').value.trim().replace(/^#/,'').toLowerCase();if(!tag)return;const {data,error}=await db.from('events').select('id,creator_id,title,hashtag,category,starts_at,venue').eq('hashtag',tag).eq('published',true).maybeSingle();if(error){$('event-status').textContent=error.message;return;}if(!data){selectedEvent=null;$('creator-badge').textContent='No event selected';$('creator-trust-detail').textContent='Find a published event first.';$('event-status').textContent='No published event found with that hashtag.';return;}selectedEvent=data;$('eventDate').textContent=new Date(data.starts_at).toLocaleString();$('eventLocation').textContent=data.venue;$('hostName').textContent='Event creator';$('eventHostNote').textContent='';$('eventTitle').textContent=data.title;$('displayHashtag').textContent='#'+data.hashtag;$('eventCategory').textContent=data.category;$('event-status').textContent=new Date(data.starts_at).toLocaleString()+' · '+data.venue;await refreshTrust();};
 $('rsvp-save').addEventListener('click',async()=>{if(!user){$('event-status').textContent='Sign in to save your RSVP.';return;}if(!selectedEvent){$('event-status').textContent='Find a published event by hashtag first.';return;}const {error}=await db.from('event_responses').upsert({event_id:selectedEvent.id,user_id:user.id,attendance,message:$('guestMessage').value.trim()},{onConflict:'event_id,user_id'});$('event-status').textContent=error?error.message:'Your RSVP and message were saved. No payment has been collected.';});
 db.auth.onAuthStateChange((_event,session)=>{setTimeout(()=>sync(session),0);});
@@ -122,3 +137,6 @@ if(returnParams.get('payment')==='return'){
 }
 if(returnParams.get('onboarding')==='return'&&user)await onboarding('status');
 if(returnParams.get('onboarding')==='refresh')$('stripe-onboarding-status').textContent='Your Stripe link expired. Click Connect bank with Stripe to continue securely.';
+
+const invitationTag=new URLSearchParams(location.search).get('event');
+if(invitationTag){window.stopCelebrationSamples?.();window.switchTab('guest');$('searchHashtag').value=invitationTag;await window.searchEvent();}

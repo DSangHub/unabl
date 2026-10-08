@@ -330,6 +330,13 @@
           <button id="event-save" onclick="saveEvent()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition">
             Publish Event & Generate Invitations
           </button>
+          <p id="event-publish-status" role="status" aria-live="polite" class="text-sm mt-3"></p>
+          <div id="event-invitation" hidden class="border border-amber-200 rounded-xl p-4 mt-3">
+            <label for="event-invitation-link" class="font-bold">Your invitation link</label>
+            <input id="event-invitation-link" readonly class="w-full border rounded-lg p-2 mt-2">
+            <button id="event-invitation-copy" type="button" class="bg-amber-700 text-white rounded-lg p-2 mt-2">Copy invitation</button>
+            <a id="event-invitation-preview" class="inline-block underline ml-3" target="_blank" rel="noopener">Open guest invitation</a>
+          </div>
         </div>
 
         <!-- Host Dashboard: Received Gifts & Thank You E-Cards -->
