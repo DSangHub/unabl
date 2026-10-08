@@ -140,3 +140,16 @@ if(returnParams.get('onboarding')==='refresh')$('stripe-onboarding-status').text
 
 const invitationTag=new URLSearchParams(location.search).get('event');
 if(invitationTag){window.stopCelebrationSamples?.();window.switchTab('guest');$('searchHashtag').value=invitationTag;await window.searchEvent();}
+
+// Open the guest response and monetary gift view on every screen size.
+const giftResponse=$('rsvp-attending').closest('.md\\:col-span-7');
+giftResponse.id='gift-response';
+giftResponse.style.scrollMarginTop='90px';
+const openingStyle=document.createElement('style');
+openingStyle.textContent='@media(max-width:767px){#eventCard > :first-child{order:2}#gift-response{order:1}}';
+document.head.append(openingStyle);
+if(!location.hash||location.hash==='#gift-response'||returnParams.get('onboarding')==='return'){
+ window.switchTab('guest');
+ if(returnParams.get('onboarding')==='return')history.replaceState(null,'',location.pathname+location.search+'#gift-response');
+ requestAnimationFrame(()=>giftResponse.scrollIntoView({block:'start',behavior:'instant'}));
+}
