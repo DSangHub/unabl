@@ -137,7 +137,7 @@
             Wedding Celebration
           </div>
           <h2 class="text-2xl font-bold text-slate-900" id="eventTitle">Maya & Raj's Wedding</h2><span id="creator-badge" class="inline-block mt-2 text-sm text-slate-500">Sample event · not verified</span>
-          <p class="text-xs text-amber-600 font-bold tracking-wide" id="displayHashtag">#MayaAndRaj2026</p>
+          <div id="sample-controls" class="flex flex-wrap items-center gap-2 text-xs text-slate-500"><span id="sample-position">Sample 1 of 6</span><button id="sample-prev" type="button" class="border rounded px-2 py-1" aria-label="Previous sample celebration">Previous</button><button id="sample-next" type="button" class="border rounded px-2 py-1" aria-label="Next sample celebration">Next</button><button id="sample-pause" type="button" class="border rounded px-2 py-1" aria-pressed="false">Pause samples</button></div><p class="text-xs text-amber-600 font-bold tracking-wide" id="displayHashtag">#MayaAndRaj2026</p>
           
           <div class="space-y-3 text-sm text-slate-600 pt-2">
             <div class="flex items-center gap-3">
@@ -156,7 +156,7 @@
 
           <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 space-y-1">
             <p class="font-bold"><i class="fa-solid fa-heart mr-1"></i> Host Note:</p>
-            <p class="italic">"We are excited to celebrate our special day with family and friends! If you are unable to attend in person, your warm wishes and gifts are deeply cherished."</p>
+            <p id="eventHostNote" class="italic">"We are excited to celebrate our special day with family and friends! If you are unable to attend in person, your warm wishes and gifts are deeply cherished."</p>
           </div>
         </div>
 
@@ -619,6 +619,40 @@
         find_btn: "Buscar"
       }
     };
+
+    const celebrationSamples=[
+      {title:"Maya & Raj's Wedding",category:'Wedding Celebration',tag:'MayaAndRaj2026',host:'Maya Patel'},
+      {title:'Birthday Celebration for Mary',category:'Birthday Celebration',tag:'MaryBirthday',host:'Mary'},
+      {title:'Happy Anniversary for Alex and Carmen',category:'Anniversary Celebration',tag:'AlexAndCarmenAnniversary',host:'Alex and Carmen'},
+      {title:'Wedding Celebration for Vang and Sia',category:'Wedding Celebration',tag:'VangAndSiaWedding',host:'Vang and Sia'},
+      {title:'Wedding Celebration for Armen and Sophie',category:'Wedding Celebration',tag:'ArmenAndSophieWedding',host:'Armen and Sophie'},
+      {title:'Quinceañera for Isabella',category:'Quinceañera Celebration',tag:'IsabellaQuinceanera',host:'Isabella and family'}
+    ];
+    let sampleIndex=0,samplesPaused=false,samplesStopped=false,samplesHovered=false;
+    function showCelebrationSample(index){
+      if(samplesStopped)return;sampleIndex=(index+celebrationSamples.length)%celebrationSamples.length;
+      const sample=celebrationSamples[sampleIndex];
+      document.getElementById('eventTitle').textContent=sample.title;
+      document.getElementById('eventCategory').textContent=sample.category;
+      document.getElementById('displayHashtag').textContent='#'+sample.tag;
+      document.getElementById('hostName').textContent=sample.host;
+      document.getElementById('eventDate').textContent='Sample date · October 24, 2026';
+      document.getElementById('eventLocation').textContent='Sample venue · Fresno, CA';
+      document.getElementById('eventHostNote').textContent='Join us in celebrating this special occasion with family and friends. This is a sample celebration.';
+      document.getElementById('sample-position').textContent=`Sample ${sampleIndex+1} of ${celebrationSamples.length}`;
+    }
+    document.getElementById('sample-next').addEventListener('click',()=>showCelebrationSample(sampleIndex+1));
+    document.getElementById('sample-prev').addEventListener('click',()=>showCelebrationSample(sampleIndex-1));
+    document.getElementById('sample-pause').addEventListener('click',()=>{samplesPaused=!samplesPaused;const button=document.getElementById('sample-pause');button.textContent=samplesPaused?'Resume samples':'Pause samples';button.setAttribute('aria-pressed',String(samplesPaused));});
+    document.getElementById('eventCard').addEventListener('mouseenter',()=>samplesHovered=true);
+    document.getElementById('eventCard').addEventListener('mouseleave',()=>samplesHovered=false);
+    function stopCelebrationSamples(){samplesStopped=true;document.getElementById('sample-controls').hidden=true;}
+    document.getElementById('searchHashtag').addEventListener('input',stopCelebrationSamples);
+    document.querySelector('button[onclick="searchEvent()"]').addEventListener('click',stopCelebrationSamples);
+    samplesPaused=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(samplesPaused){document.getElementById('sample-pause').textContent='Resume samples';document.getElementById('sample-pause').setAttribute('aria-pressed','true');}
+    setInterval(()=>{if(!samplesPaused&&!samplesStopped&&!samplesHovered&&!document.hidden&&!document.getElementById('eventCard').contains(document.activeElement))showCelebrationSample(sampleIndex+1);},8000);
+    showCelebrationSample(0);
 
     // Location stays on this device and is requested with browser permission.
     let locationRequest=0;
