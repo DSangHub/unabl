@@ -59,7 +59,7 @@ $('account-form').addEventListener('submit',async e=>{
 $('account-signout').addEventListener('click',async()=>{const {error}=await db.auth.signOut();if(error)status(error.message);else await sync(null);});
 const oldRSVP=window.setRSVP;window.setRSVP=type=>{attendance=type;oldRSVP(type);};
 window.saveEvent=async()=>{if(!user){status('Sign in or create an event creator account first.');$('account-email').focus();return;}const title=$('event-title-input').value.trim(),hashtag=$('newHashtagInput').value.trim().replace(/^#/,'').toLowerCase(),venue=$('event-venue').value.trim(),start=$('event-starts').value;if(!title||!venue||!start||!(/^[a-z0-9_]{3,60}$/).test(hashtag)){status('Enter an event title, venue, date/time, and a hashtag with 3–60 letters, numbers, or underscores.');return;}const button=$('event-save');button.disabled=true;try{const {data:creator,error:ce}=await db.from('event_creators').select('user_id').eq('user_id',user.id).maybeSingle();if(ce)throw ce;if(!creator)throw Error('This account is a guest account. Create an event creator account to publish events.');const {error}=await db.from('events').insert({creator_id:user.id,title,category:$('eventCatInput').value,hashtag,starts_at:new Date(start).toISOString(),venue,published:true});if(error)throw error;status('Event published. Share the hashtag #'+hashtag+'.');await myEvents();}catch(e){status(e.code==='23505'?'That hashtag is already in use. Choose another.':e.message);}finally{button.disabled=false;}};
-window.searchEvent=async()=>{const tag=$('searchHashtag').value.trim().replace(/^#/,'').toLowerCase();if(!tag)return;const {data,error}=await db.from('events').select('id,creator_id,title,hashtag,category,starts_at,venue').eq('hashtag',tag).eq('published',true).maybeSingle();if(error){$('event-status').textContent=error.message;return;}if(!data){selectedEvent=null;$('creator-badge').textContent='No event selected';$('creator-trust-detail').textContent='Find a published event first.';$('event-status').textContent='No published event found with that hashtag.';return;}selectedEvent=data;$('eventTitle').textContent=data.title;$('displayHashtag').textContent='#'+data.hashtag;$('eventCategory').textContent=data.category;$('event-status').textContent=new Date(data.starts_at).toLocaleString()+' · '+data.venue;await refreshTrust();};
+window.searchEvent=async()=>{const tag=$('searchHashtag').value.trim().replace(/^#/,'').toLowerCase();if(!tag)return;const {data,error}=await db.from('events').select('id,creator_id,title,hashtag,category,starts_at,venue').eq('hashtag',tag).eq('published',true).maybeSingle();if(error){$('event-status').textContent=error.message;return;}if(!data){selectedEvent=null;$('creator-badge').textContent='No event selected';$('creator-trust-detail').textContent='Find a published event first.';$('event-status').textContent='No published event found with that hashtag.';return;}selectedEvent=data;$('eventDate').textContent=new Date(data.starts_at).toLocaleString();$('eventLocation').textContent=data.venue;$('hostName').textContent='Event creator';$('eventHostNote').textContent='';$('eventTitle').textContent=data.title;$('displayHashtag').textContent='#'+data.hashtag;$('eventCategory').textContent=data.category;$('event-status').textContent=new Date(data.starts_at).toLocaleString()+' · '+data.venue;await refreshTrust();};
 $('rsvp-save').addEventListener('click',async()=>{if(!user){$('event-status').textContent='Sign in to save your RSVP.';return;}if(!selectedEvent){$('event-status').textContent='Find a published event by hashtag first.';return;}const {error}=await db.from('event_responses').upsert({event_id:selectedEvent.id,user_id:user.id,attendance,message:$('guestMessage').value.trim()},{onConflict:'event_id,user_id'});$('event-status').textContent=error?error.message:'Your RSVP and message were saved. No payment has been collected.';});
 db.auth.onAuthStateChange((_event,session)=>{setTimeout(()=>sync(session),0);});
 const {data,error}=await db.auth.getSession();if(error)status(error.message);else await sync(data.session);
@@ -67,14 +67,14 @@ const {data,error}=await db.auth.getSession();if(error)status(error.message);els
 $('request-verification').addEventListener('click',async()=>{
  if(!user){status('Sign in as an event creator first.');return;}
  $('request-verification').disabled=true;
- try{const {error}=await db.from('creator_verification_requests').insert({creator_id:user.id});if(error&&error.code!=='23505')throw error;await refreshCreatorPanel();status('Verification review requested. Payment and secure identity onboarding are not live yet.');}catch(e){status(e.message);$('request-verification').disabled=false;}
+ try{const {error}=await db.from('creator_verification_requests').insert({creator_id:user.id});if(error&&error.code!=='23505')throw error;await refreshCreatorPanel();status('Verification review requested. Complete Stripe onboarding too. Identity approval requires review.');}catch(e){status(e.message);$('request-verification').disabled=false;}
 });
 const trustStatus=text=>{$('trust-action-status').textContent=text;};
 $('vouch-creator').addEventListener('click',async()=>{
  if(!user||!selectedEvent){trustStatus('Sign in and find a published event first.');return;}
  if(user.id===selectedEvent.creator_id){trustStatus('You cannot vouch for your own event.');return;}
  const button=$('vouch-creator');button.disabled=true;
- try{const {data:gifts,error}=await db.from('gift_payments').select('id').eq('donor_id',user.id).eq('creator_id',selectedEvent.creator_id).in('state',['held','released']).order('paid_at',{ascending:false}).limit(1);if(error)throw error;if(!gifts.length){trustStatus('You must have a successful gift payment to this creator before vouching. Payments are not live yet.');return;}
+ try{const {data:gifts,error}=await db.from('gift_payments').select('id').eq('donor_id',user.id).eq('creator_id',selectedEvent.creator_id).in('state',['held','released']).order('paid_at',{ascending:false}).limit(1);if(error)throw error;if(!gifts.length){trustStatus('You must have a successful gift payment to this creator before vouching.');return;}
  const {error:ve}=await db.from('creator_vouches').insert({creator_id:selectedEvent.creator_id,donor_id:user.id,gift_id:gifts[0].id});if(ve&&ve.code!=='23505')throw ve;trustStatus(ve?'You already vouched for this creator.':'Your vouch was saved.');await refreshTrust();}catch(e){trustStatus(e.message);}finally{button.disabled=false;}
 });
 $('withdraw-vouch').addEventListener('click',async()=>{if(!user||!selectedEvent){trustStatus('Sign in and find a published event first.');return;}const {error}=await db.from('creator_vouches').delete().eq('creator_id',selectedEvent.creator_id).eq('donor_id',user.id);trustStatus(error?error.message:'Your vouch has been withdrawn.');if(!error)await refreshTrust();});
@@ -86,3 +86,30 @@ $('promotion-form').addEventListener('submit',async e=>{
  const button=e.currentTarget.querySelector('button[type="submit"]');button.disabled=true;
  try{const {error}=await db.from('event_promotion_drafts').insert({user_id:user.id,display_name:$('promo-name').value.trim(),event_type:$('promo-type').value,event_date:$('promo-date').value,chosen_location:$('promo-location').value.trim()});if(error)throw error;message.textContent='Draft saved. Price: $29.95 for seven days. No payment collected; your promotion is not published yet.';}catch(error){message.textContent=error.message||'Unable to save. Please try again.';}finally{button.disabled=false;}
 });
+
+async function paymentRequest(path,body,method='POST'){
+ const {data:{session}}=await db.auth.getSession();if(!session)throw Error('Sign in and confirm your email first.');
+ const response=await fetch(path,{method,headers:{'Authorization':'Bearer '+session.access_token,'Content-Type':'application/json'},...(method==='POST'?{body:JSON.stringify(body)}:{})});
+ const data=await response.json();if(!response.ok)throw Error(data.error||'Unable to connect.');return data;
+}
+let giftRequest=null;
+$('gift-checkout').addEventListener('click',async()=>{
+ const button=$('gift-checkout');button.disabled=true;
+ try{if(!selectedEvent)throw Error('Find a published event by hashtag first. Sample celebrations cannot receive payments.');
+ const cents=Math.round(Number($('customGift').value)*100);const fingerprint=selectedEvent.id+':'+cents+':'+$('guestMessage').value;
+ if(!giftRequest||giftRequest.fingerprint!==fingerprint)giftRequest={fingerprint,id:crypto.randomUUID()};
+ const data=await paymentRequest('/api/checkout',{event_id:selectedEvent.id,amount_cents:cents,message:$('guestMessage').value,request_id:giftRequest.id});
+ window.location.assign(data.url);
+ }catch(e){$('event-status').textContent=e.message;}finally{button.disabled=false;}
+});
+async function onboarding(action){const output=$('stripe-onboarding-status');try{output.textContent='Connecting to Stripe…';const data=await paymentRequest('/api/onboarding',{action});if(data.url)window.location.assign(data.url);else{output.textContent=data.message;await refreshCreatorPanel();}}catch(e){output.textContent=e.message;}}
+$('stripe-onboarding').addEventListener('click',()=>onboarding('start'));
+$('stripe-status').addEventListener('click',()=>onboarding('status'));
+const returnParams=new URLSearchParams(location.search);
+if(returnParams.get('payment')==='cancelled')status('Checkout cancelled. No gift confirmation has been received.');
+if(returnParams.get('payment')==='return'){
+ if(user){try{const data=await paymentRequest('/api/payment-status?session_id='+encodeURIComponent(returnParams.get('session_id')) ,null,'GET');status(data.status==='paid'?'Gift payment confirmed. The five-day minimum hold has started.':data.status==='failed'?'Payment failed.':'Payment confirmation is pending. Check your account again shortly.');}catch(e){status(e.message);}}
+ else status('Sign in to check the payment confirmation.');
+}
+if(returnParams.get('onboarding')==='return'&&user)await onboarding('status');
+if(returnParams.get('onboarding')==='refresh')$('stripe-onboarding-status').textContent='Your Stripe link expired. Click Connect bank with Stripe to continue securely.';

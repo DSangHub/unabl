@@ -1,0 +1,30 @@
+begin;
+do $$
+declare c uuid:=gen_random_uuid();d uuid:=gen_random_uuid();d2 uuid:=gen_random_uuid();d3 uuid:=gen_random_uuid();e uuid:=gen_random_uuid();o uuid:=gen_random_uuid();g uuid;j uuid;g2 uuid;g3 uuid;blocked boolean:=false;
+begin
+ insert into auth.users(id) values(c),(d),(d2),(d3);
+ insert into public.profiles(id,display_name) values(c,'Rollback creator'),(d,'Rollback donor'),(d2,'Rollback donor2'),(d3,'Rollback donor3');
+ insert into public.event_creators(user_id,organizer_name) values(c,'Rollback test');
+ insert into public.events(id,creator_id,title,category,hashtag,starts_at,venue) values(e,c,'Rollback test','Wedding','test_'||replace(e::text,'-',''),now(),'Test');
+ insert into public.creator_verifications(creator_id,identity_status,stripe_verified,risk_blocked,reviewed_at) values(c,'approved',true,false,now());
+ insert into public.checkout_orders(id,request_id,donor_id,event_id,creator_id,gift_cents,total_cents) values(o,gen_random_uuid(),d,e,c,10000,10520);
+ perform public.fulfill_gift_order(o,'cs_rollback','pi_rollback','ch_rollback',now()-interval '4 days','held');
+ perform public.fulfill_gift_order(o,'cs_rollback','pi_rollback','ch_rollback',now()-interval '3 days','held');
+ if (select count(*) from public.gift_payments where order_id=o)<>1 then raise exception 'Duplicate fulfillment';end if;
+ select id into g from public.gift_payments where order_id=o;
+ insert into public.gift_payments(event_id,creator_id,donor_id,amount_cents,stripe_payment_id,paid_at) values(e,c,d2,10000,'pi_rollback2',now()-interval '6 days') returning id into g2;
+ insert into public.gift_payments(event_id,creator_id,donor_id,amount_cents,stripe_payment_id,paid_at) values(e,c,d3,10000,'pi_rollback3',now()-interval '6 days') returning id into g3;
+ insert into public.creator_vouches(creator_id,donor_id,gift_id) values(c,d,g),(c,d2,g2),(c,d3,g3);
+ if public.gift_release_eligible(g) then raise exception 'Four day gift released';end if;
+ begin update public.gift_payments set state='released',stripe_transfer_id='tr_bad' where id=g;exception when others then blocked:=true;end;
+ if not blocked then raise exception 'Premature release was allowed';end if;
+ if not public.gift_release_eligible(g2) then raise exception 'Eligible gift blocked';end if;
+ insert into public.gift_release_jobs(gift_id,stripe_transfer_id) values(g2,'tr_rollback') returning id into j;
+ perform public.finalize_gift_release(j,'tr_rollback');perform public.finalize_gift_release(j,'tr_rollback');
+ if (select state from public.gift_payments where id=g2)<>'released' then raise exception 'Finalize failed';end if;
+ insert into public.event_fraud_reports(event_id,reporter_id,reason) values(e,d,'Rollback fraud report test');
+ if public.gift_release_eligible(g3) then raise exception 'Fraud report did not block release';end if;
+ if has_function_privilege('authenticated','public.fulfill_gift_order(uuid,text,text,text,timestamptz,text)','execute') or has_function_privilege('anon','public.claim_gift_releases()','execute') then raise exception 'Client has service access';end if;
+end;$$;
+rollback;
+select 'PASS: duplicate fulfillment, five-day hold, finalization retries, fraud gate and client restrictions' as result;

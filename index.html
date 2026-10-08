@@ -211,7 +211,7 @@
           <div class="space-y-3">
             <div class="flex justify-between items-center">
               <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">3. Send Monetary Gift ($10 - $1,000)</label>
-              <span class="text-xs text-slate-500">Direct via Stripe</span>
+              <span class="text-xs text-slate-500">Secure Stripe Checkout</span>
             </div>
             
             <div class="grid grid-cols-4 gap-2">
@@ -237,7 +237,7 @@
                 <span id="breakdownUnabl">$2.00</span>
               </div>
               <div class="flex justify-between text-slate-500">
-                <span>Stripe Processing (2.9% + $0.30):</span>
+                <span>Payment handling fee (2.9% + $0.30):</span>
                 <span id="breakdownStripe">$3.20</span>
               </div>
               <div class="border-t border-slate-200 pt-1 flex justify-between font-bold text-slate-900">
@@ -249,8 +249,8 @@
 
           <button id="rsvp-save" type="button" class="w-full border border-amber-700 text-amber-800 font-bold p-3 rounded-xl">Save RSVP & message</button><p id="event-status" role="status" aria-live="polite"></p>
 <!-- Submit Button -->
-          <button type="button" disabled class="w-full bg-slate-200 text-slate-600 font-bold py-3 rounded-xl">Gift payments coming soon<span id="btnPayTotal" hidden>$105.20</span></button>
-          <p class="text-sm text-slate-500">When payments launch, gifts will be held for at least five days after successful payment and released only after the creator passes verification.</p>
+          <button id="gift-checkout" type="button" class="w-full bg-amber-700 text-white font-bold py-3 rounded-xl">Send gift &amp; pay <span id="btnPayTotal">$105.20</span></button>
+          <p class="text-sm text-slate-500">Gifts will be held for at least five days after successful payment and released only after the creator passes verification.</p>
           <div class="border border-amber-200 bg-amber-50 rounded-xl p-4 mt-4">
             <h3 class="font-bold">Creator verification &amp; gift protection</h3>
             <p id="creator-trust-detail" class="text-sm mt-2">Find a published event to see its creator’s verification status.</p>
@@ -525,7 +525,7 @@
 <label id="account-kind-field" hidden>Account type<select id="account-kind" class="block w-full border rounded-lg p-3 mt-1"><option value="user">User / guest</option><option value="creator">Event creator</option></select></label>
 <button id="account-submit" type="submit" class="bg-amber-700 text-white p-3 rounded-lg font-semibold">Sign in</button></form>
 <div id="account-signed-in" hidden class="mt-4"><span id="account-user"></span> <button id="account-signout" type="button" class="border p-2 rounded-lg">Sign out</button></div>
-<p id="account-status" role="status" aria-live="polite" class="mt-3 text-sm"></p><div id="creator-verification-panel" hidden class="border border-amber-200 bg-amber-50 rounded-xl p-4 mt-4"><h3 class="font-bold">★ Event creator verification</h3><p class="text-sm mt-2">Get identity approval and vouches from three different paid gift givers to qualify for a verified star. Unresolved fraud reports block release.</p><p class="text-sm mt-2">Gifts have a minimum five-day hold from successful payment. Verification, payment clearance, and review can take longer. Payments are not live yet.</p><p id="verification-progress" class="text-sm mt-2"></p><button id="request-verification" type="button" class="bg-amber-700 text-white rounded-lg p-2 mt-3">Request verification</button><p class="text-xs text-slate-500 mt-2">Do not upload ID documents here. Identity checks will use secure Stripe onboarding when it is connected.</p></div><div id="my-events" class="mt-3"></div></div></section>
+<p id="account-status" role="status" aria-live="polite" class="mt-3 text-sm"></p><div id="creator-verification-panel" hidden class="border border-amber-200 bg-amber-50 rounded-xl p-4 mt-4"><h3 class="font-bold">★ Event creator verification</h3><p class="text-sm mt-2">Get identity approval and vouches from three different paid gift givers to qualify for a verified star. Unresolved fraud reports block release.</p><p class="text-sm mt-2">Gifts have a minimum five-day hold from successful payment. Verification, payment clearance, and review can take longer. Bank arrival can take additional time.</p><p id="verification-progress" class="text-sm mt-2"></p><button id="stripe-onboarding" type="button" class="bg-amber-700 text-white rounded-lg p-2 mt-3">Connect bank with Stripe</button> <button id="stripe-status" type="button" class="border border-amber-700 rounded-lg p-2 mt-3">Check Stripe requirements</button> <p id="stripe-onboarding-status" role="status" class="text-sm mt-2"></p><button id="request-verification" type="button" class="bg-amber-700 text-white rounded-lg p-2 mt-3">Request verification</button><p class="text-xs text-slate-500 mt-2">Do not upload ID documents here. Stripe securely collects identity and bank details. Complete onboarding, then request an identity review.</p></div><div id="my-events" class="mt-3"></div></div></section>
 
   <!-- Host Thank You E-Card Modal -->
   <div id="ackModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
