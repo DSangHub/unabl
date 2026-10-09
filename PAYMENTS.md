@@ -29,3 +29,11 @@ Checkout request UUIDs, unique session/payment/charge IDs, locked atomic fulfill
 Run `npm ci --ignore-scripts` and `npm test`. `test/database-gates.sql` runs a transaction that rolls back all fixture users and records, checking duplicate fulfillment, hold duration, finalization retry, report blocking and client restrictions.
 
 GET /api/payment-health requires Authorization: Bearer CRON_SECRET. It reports missing configuration, Stripe account/mode and database connectivity, never secret values. Before activation, verify the account matches the account on which webhooks were registered. Test with Stripe sandbox methods; never run a real charge to test a release.
+
+## Live rollout (2026-10-09)
+
+Live Stripe account: acct_1UNd1GAc94GIAuXA. Production stores separate platform snapshot, Connect snapshot, and Accounts v2 thin signing secrets. Accounts v2 requirement and recipient capability notifications post to `/api/stripe-connect-webhook`; checkout/refund/dispute snapshots post to `/api/stripe-webhook`.
+
+Apply `20261009205528_stripe_live_isolation.sql` before deploying this branch. The migration preserves sandbox account/order/payment records, adds platform and mode columns, changes connected-account uniqueness to creator plus platform, scopes gift release jobs, excludes sandbox vouches from live verification, and clears sandbox-derived Stripe capability flags. It does not delete payment history or approve identity reviews. Automatic approval review blocked application pending explicit approval.
+
+Keep PAYMENTS_ENABLED=false and RELEASES_ENABLED=false until live key validation and recipient onboarding pass. Existing sandbox connected accounts and test bank data cannot receive live gifts. Creators must use My account → Connect bank with Stripe to create a live recipient account, then complete Stripe's real identity and bank requirements. A Stripe return URL alone does not prove readiness; the server retrieves current recipient capability status.

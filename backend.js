@@ -164,8 +164,8 @@ if(returnParams.get('payment')==='return'){
  if(user){try{const data=await paymentRequest('/api/payment-status?session_id='+encodeURIComponent(returnParams.get('session_id')) ,null,'GET');status(data.status==='paid'?'Gift payment confirmed. The five-day minimum hold has started.':data.status==='failed'?'Payment failed.':'Payment confirmation is pending. Check your account again shortly.');}catch(e){status(e.message);}}
  else status('Sign in to check the payment confirmation.');
 }
-if(returnParams.get('onboarding')==='return'&&user)await onboarding('status');
-if(returnParams.get('onboarding')==='refresh')$('stripe-onboarding-status').textContent='Your Stripe link expired. Click Connect bank with Stripe to continue securely.';
+if(returnParams.get('onboarding')==='return'&&user){await onboarding('status');$('account').scrollIntoView({block:'start'});}
+if(returnParams.get('onboarding')==='refresh'&&user)await onboarding('start');
 
 const invitationTag=new URLSearchParams(location.search).get('event');
 if(invitationTag){window.stopCelebrationSamples?.();window.switchTab('guest');$('searchHashtag').value=invitationTag;await window.searchEvent();}
@@ -177,9 +177,8 @@ giftResponse.style.scrollMarginTop='90px';
 const openingStyle=document.createElement('style');
 openingStyle.textContent='@media(max-width:767px){#eventCard > :first-child{order:2}#gift-response{order:1}}';
 document.head.append(openingStyle);
-if(!recovering&&(!location.hash||location.hash==='#gift-response'||returnParams.get('onboarding')==='return')){
+if(!recovering&&(!location.hash||location.hash==='#gift-response')){
  window.switchTab('guest');
- if(returnParams.get('onboarding')==='return')history.replaceState(null,'',location.pathname+location.search+'#gift-response');
  requestAnimationFrame(()=>giftResponse.scrollIntoView({block:'start',behavior:'instant'}));
 }
 

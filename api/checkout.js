@@ -1,18 +1,19 @@
 import {randomUUID} from 'node:crypto';
-import {route,config,enabled,authenticate,check,fail,fees,uuid,accountStatus} from '../lib/payment.js';
+import {route,config,enabled,authenticate,check,fail,fees,uuid,accountStatus,stripeScope,inScope} from '../lib/payment.js';
 export default route(async(req,res)=>{
  enabled();const {stripe,db,origin}=config(),user=await authenticate(req,db,origin),body=req.body||{};
  if(!uuid(body.request_id)||!uuid(body.event_id))fail('Choose a published event and try again.');
  const amount=Number(body.amount_cents),quote=fees(amount);
  const event=check(await db.from('events').select('id,creator_id,title,published').eq('id',body.event_id).eq('published',true).maybeSingle());if(!event)fail('Event not found.',404);if(event.creator_id===user.id)fail('You cannot send a gift to yourself.');
  const readiness=await accountStatus(stripe,db,event.creator_id);if(!readiness.ready)fail('This creator must finish Stripe onboarding before receiving gifts.',409);
+ const scope=await stripeScope(stripe);
  const prior=check(await db.from('checkout_orders').select('*').eq('request_id',body.request_id).maybeSingle());
  let order=prior;
- if(prior&&(prior.donor_id!==user.id||prior.event_id!==event.id||prior.gift_cents!==amount))fail('Payment request does not match.',409);
- if(!order){const row={id:randomUUID(),request_id:body.request_id,donor_id:user.id,event_id:event.id,creator_id:event.creator_id,gift_cents:amount,total_cents:quote.total,message:String(body.message||'').trim().slice(0,2000)};
+ if(prior&&(prior.donor_id!==user.id||prior.event_id!==event.id||prior.gift_cents!==amount||prior.livemode!==scope.livemode||prior.stripe_platform_id!==scope.platform))fail('Payment request does not match.',409);
+ if(!order){const row={id:randomUUID(),request_id:body.request_id,donor_id:user.id,event_id:event.id,creator_id:event.creator_id,gift_cents:amount,total_cents:quote.total,livemode:scope.livemode,stripe_platform_id:scope.platform,message:String(body.message||'').trim().slice(0,2000)};
  const result=await db.from('checkout_orders').insert(row).select().single();
  if(result.error?.code==='23505')order=check(await db.from('checkout_orders').select('*').eq('request_id',body.request_id).single());else order=check(result);
- if(order.donor_id!==user.id||order.event_id!==event.id||order.gift_cents!==amount)fail('Payment request does not match.',409);
+ if(order.donor_id!==user.id||order.event_id!==event.id||order.gift_cents!==amount||order.livemode!==scope.livemode||order.stripe_platform_id!==scope.platform)fail('Payment request does not match.',409);
  }
  if(order.status==='paid')fail('This gift has already been paid.',409);
  const line=(name,cents)=>({price_data:{currency:'usd',unit_amount:cents,product_data:{name}},quantity:1});
