@@ -1,4 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm';
+let recovering=new URLSearchParams(location.hash.slice(1)).get('type')==='recovery';
 const db = createClient('https://jbcxodpudujoscdafovx.supabase.co', "sb_publishable_ZZvmnAgd81ui0_PkzopkaQ_-hGz88v_");
 const $ = id => document.getElementById(id);
 let user=null,selectedEvent=null,attendance='attending';
@@ -29,10 +30,30 @@ async function myEvents(){
  if(data.length){const heading=document.createElement('h3');heading.textContent='Your saved events';heading.className='font-bold';$('my-events').append(heading);}
  for(const event of data){const row=document.createElement('p');row.textContent=event.title+' — #'+event.hashtag+' — '+new Date(event.starts_at).toLocaleString();$('my-events').append(row);}
 }
-async function sync(session){user=session?.user||null;$('account-form').hidden=!!user;$('account-modes').hidden=!!user;$('header-signin').textContent=user?'My account':'Sign in';$('header-signup').hidden=!!user;$('account-signed-in').hidden=!user;if(user){$('account-user').textContent='Signed in as '+user.email;try{await profile();await myEvents();await refreshCreatorPanel();status('Your account is connected.');}catch(e){status(e.message);}}else{$('creator-verification-panel').hidden=true;$('my-events').replaceChildren();status('Sign in to save your profile, RSVP, or event.');}}
+async function sync(session){user=session?.user||null;$('account-form').hidden=!!user&&!recovering;$('account-modes').hidden=!!user||recovering;$('header-signin').textContent=user?'My account':'Sign in';$('header-signup').hidden=!!user;$('account-signed-in').hidden=!user;if(user){$('account-user').textContent='Signed in as '+user.email;try{await profile();await myEvents();await refreshCreatorPanel();status('Your account is connected.');}catch(e){status(e.message);}}else{$('creator-verification-panel').hidden=true;$('my-events').replaceChildren();status('Sign in to save your profile, RSVP, or event.');}}
+const passwordInput=$('account-password');
+const passwordWrap=document.createElement('div');passwordWrap.style.position='relative';
+passwordInput.replaceWith(passwordWrap);passwordWrap.append(passwordInput);passwordInput.style.paddingRight='3rem';
+const eye=document.createElement('button');eye.type='button';eye.setAttribute('aria-label','Show password');eye.setAttribute('aria-pressed','false');eye.title='Show password';
+eye.style.cssText='position:absolute;right:10px;top:50%;transform:translateY(-50%);padding:6px;color:#475569';
+eye.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
+eye.addEventListener('click',()=>{const visible=passwordInput.type==='password';passwordInput.type=visible?'text':'password';eye.setAttribute('aria-pressed',String(visible));eye.setAttribute('aria-label',visible?'Hide password':'Show password');eye.title=visible?'Hide password':'Show password';});passwordWrap.append(eye);
+const forgot=document.createElement('button');forgot.type='button';forgot.textContent='Forgot password?';forgot.className='text-sm text-orange-700 underline mt-3';$('account-submit').after(forgot);
+forgot.addEventListener('click',()=>setAccountMode('reset'));
 let accountMode='signin';
 function setAccountMode(mode){
- accountMode=mode;const signup=mode==='signup';
+ accountMode=mode;const signup=mode==='signup',reset=mode==='reset',update=mode==='update';
+ $('account-email').closest('label').hidden=update;$('account-email').required=!update;
+ passwordWrap.parentElement.hidden=reset;passwordInput.required=!reset;forgot.hidden=mode!=='signin';
+ passwordInput.type='password';eye.setAttribute('aria-pressed','false');eye.setAttribute('aria-label','Show password');
+ if(reset||update){
+ $('account-form').hidden=false;$('account-modes').hidden=update;$('account-signed-in').hidden=true;
+ $('account-title').textContent=update?'Choose a new password':'Reset your password';
+ $('account-description').textContent=update?'Enter a new password with at least 8 characters.':'Enter your email and we will send a password reset link.';
+ $('account-name-field').hidden=true;$('account-kind-field').hidden=true;$('account-name').required=false;
+ $('account-password-help').hidden=reset;passwordInput.minLength=8;passwordInput.autocomplete='new-password';
+ $('account-submit').textContent=update?'Save new password':'Send reset email';status('');return;
+ }
  $('account-title').textContent=signup?'Sign up for Unabl':'Sign in to Unabl';
  $('account-description').textContent=signup?'Create your account to send cards, RSVP, or host events.':'Welcome back. Sign in to save your RSVP, cards, and events.';
  $('account-name-field').hidden=!signup;$('account-kind-field').hidden=!signup;$('account-password-help').hidden=!signup;
@@ -50,6 +71,14 @@ $('account-form').addEventListener('submit',async e=>{
  e.preventDefault();const button=$('account-submit');button.disabled=true;
  const signup=accountMode==='signup';status(signup?'Creating account…':'Signing in…');
  try{
+ if(accountMode==='reset'){
+ const {error}=await db.auth.resetPasswordForEmail($('account-email').value.trim(),{redirectTo:'https://www.unabl.app/'});if(error)throw error;
+ status('If an account exists for this email, you will receive a password reset link. Check your inbox and spam folder.');return;
+ }
+ if(accountMode==='update'){
+ const {error}=await db.auth.updateUser({password:passwordInput.value});if(error)throw error;
+ passwordInput.value='';recovering=false;setAccountMode('signin');const {data}=await db.auth.getSession();await sync(data.session);status('Your password has been updated.');return;
+ }
  const credentials={email:$('account-email').value.trim(),password:$('account-password').value};
  const {data,error}=signup?await db.auth.signUp({...credentials,options:{emailRedirectTo:'https://www.unabl.app/',data:{display_name:$('account-name').value.trim(),account_kind:$('account-kind').value}}}):await db.auth.signInWithPassword(credentials);
  if(error)throw error;$('account-password').value='';
@@ -76,8 +105,8 @@ window.saveEvent=async()=>{
 $('event-invitation-copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('event-invitation-link').value);$('event-publish-status').textContent='Invitation link copied. Paste it into your email or text message.';}catch{$('event-invitation-link').focus();$('event-invitation-link').select();$('event-publish-status').textContent='Select and copy your invitation link.';}});
 window.searchEvent=async()=>{const tag=$('searchHashtag').value.trim().replace(/^#/,'').toLowerCase();if(!tag)return;const {data,error}=await db.from('events').select('id,creator_id,title,hashtag,category,starts_at,venue').eq('hashtag',tag).eq('published',true).maybeSingle();if(error){$('event-status').textContent=error.message;return;}if(!data){selectedEvent=null;$('creator-badge').textContent='No event selected';$('creator-trust-detail').textContent='Find a published event first.';$('event-status').textContent='No published event found with that hashtag.';return;}selectedEvent=data;$('eventDate').textContent=new Date(data.starts_at).toLocaleString();$('eventLocation').textContent=data.venue;$('hostName').textContent='Event creator';$('eventHostNote').textContent='';$('eventTitle').textContent=data.title;$('displayHashtag').textContent='#'+data.hashtag;$('eventCategory').textContent=data.category;$('event-status').textContent=new Date(data.starts_at).toLocaleString()+' · '+data.venue;await refreshTrust();};
 $('rsvp-save').addEventListener('click',async()=>{if(!user){$('event-status').textContent='Sign in to save your RSVP.';return;}if(!selectedEvent){$('event-status').textContent='Find a published event by hashtag first.';return;}const {error}=await db.from('event_responses').upsert({event_id:selectedEvent.id,user_id:user.id,attendance,message:$('guestMessage').value.trim()},{onConflict:'event_id,user_id'});$('event-status').textContent=error?error.message:'Your RSVP and message were saved. No payment has been collected.';});
-db.auth.onAuthStateChange((_event,session)=>{setTimeout(()=>sync(session),0);});
-const {data,error}=await db.auth.getSession();if(error)status(error.message);else await sync(data.session);
+db.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY')recovering=true;setTimeout(async()=>{await sync(session);if(recovering){setAccountMode('update');$('account').scrollIntoView({block:'start'});passwordInput.focus();}},0);});
+const {data,error}=await db.auth.getSession();if(error)status(error.message);else await sync(data.session);if(recovering)setAccountMode('update');
 
 $('request-verification').addEventListener('click',async()=>{
  if(!user){status('Sign in as an event creator first.');return;}
@@ -148,7 +177,7 @@ giftResponse.style.scrollMarginTop='90px';
 const openingStyle=document.createElement('style');
 openingStyle.textContent='@media(max-width:767px){#eventCard > :first-child{order:2}#gift-response{order:1}}';
 document.head.append(openingStyle);
-if(!location.hash||location.hash==='#gift-response'||returnParams.get('onboarding')==='return'){
+if(!recovering&&(!location.hash||location.hash==='#gift-response'||returnParams.get('onboarding')==='return')){
  window.switchTab('guest');
  if(returnParams.get('onboarding')==='return')history.replaceState(null,'',location.pathname+location.search+'#gift-response');
  requestAnimationFrame(()=>giftResponse.scrollIntoView({block:'start',behavior:'instant'}));
