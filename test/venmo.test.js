@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {knownGiftFees,venmoUsername} from '../lib/venmo.js';
+import {prepareVenmoPath} from '../api/venmo-path.js';
+const event={id:'00000000-0000-4000-8000-000000000001',creator_id:'creator',title:'Rose’s Birthday',hashtag:'rosebloom'};
+function fixture(options={}){return {from(table){return {select(){return this},eq(){return this},async maybeSingle(){return {data:table==='events'?(options.unpublished?null:event):{user_id:'creator'}}}}},auth:{admin:{async getUserById(){return {data:{user:{user_metadata:{unabl_venmo_username:options.recipient||'Rose-Gifts'}}}}}}}};}
+const body={event_id:event.id,amount_cents:1000,knows_creator:true};
+test('direct gift fee is exactly 2% rounded in cents, separate from gift',()=>{assert.deepEqual(knownGiftFees(1000),{gift_cents:1000,fee_cents:20});assert.deepEqual(knownGiftFees(1515),{gift_cents:1515,fee_cents:30});for(const amount of [999,100001,NaN,1000.5])assert.throws(()=>knownGiftFees(amount));});
+test('Venmo usernames cannot inject URLs, script or arbitrary payment targets',()=>{assert.equal(venmoUsername('@Rose-Gifts'),'Rose-Gifts');for(const name of ['https://evil.example','a/bcd','user?amount=9','<script>','abcd','a'.repeat(31)])assert.equal(venmoUsername(name),null);});
+test('path reads creator handle from server and keeps both payments unverified',async()=>{const result=await prepareVenmoPath(fixture(),{id:'donor'},{...body,recipient_username:'Attacker'},'Unabl-App');assert.equal(result.recipient_username,'Rose-Gifts');assert.equal(result.recipient_url,'https://venmo.com/Rose-Gifts');assert.equal(result.fee_cents,20);assert.equal(result.payment_status,'not_verified');});
+test('unpublished events, self gifts and missing acknowledgement are blocked',async()=>{await assert.rejects(prepareVenmoPath(fixture({unpublished:true}),{id:'donor'},body,'Unabl-App'),/not published/);await assert.rejects(prepareVenmoPath(fixture(),{id:'creator'},body,'Unabl-App'),/own event/);await assert.rejects(prepareVenmoPath(fixture(),{id:'donor'},{...body,knows_creator:false},'Unabl-App'),/personally know/);});
+test('unconfigured fee account and invalid recipient never expose payment links',async()=>{await assert.rejects(prepareVenmoPath(fixture(),{id:'donor'},body,''),/not configured/);await assert.rejects(prepareVenmoPath(fixture({recipient:'evil/url'}),{id:'donor'},body,'Unabl-App'),/not added/);await assert.rejects(prepareVenmoPath(fixture(),{id:'donor'},body,'Rose-Gifts'),/different/);});

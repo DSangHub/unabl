@@ -1,4 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm';
+import {initKnownGift} from './known-gift.js';
 let recovering=new URLSearchParams(location.hash.slice(1)).get('type')==='recovery';
 const db = createClient('https://jbcxodpudujoscdafovx.supabase.co', "sb_publishable_ZZvmnAgd81ui0_PkzopkaQ_-hGz88v_");
 const $ = id => document.getElementById(id);
@@ -193,3 +194,4 @@ otherGift.type='button';otherGift.textContent='Other';otherGift.className=docume
 otherGift.setAttribute('aria-controls','customGift');
 otherGift.addEventListener('click',()=>{customGift.focus();customGift.select();});
 giftOptions.append(otherGift);
+initKnownGift({db,getUser:()=>user,getEvent:()=>selectedEvent});
