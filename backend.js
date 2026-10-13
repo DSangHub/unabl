@@ -140,7 +140,7 @@ async function paymentRequest(path,body,method='POST'){
 let giftRequest=null;
 $('gift-checkout').addEventListener('click',async()=>{
  const button=$('gift-checkout');button.disabled=true;
- try{if(!selectedEvent)throw Error('Find a published event by hashtag first. Sample celebrations cannot receive payments.');
+ try{if((window.unablCurrency||'USD')!=='USD')throw Error('GBP and EUR are preview currencies. Select USD to use the current checkout.');if(!selectedEvent)throw Error('Find a published event by hashtag first. Sample celebrations cannot receive payments.');
  const cents=Math.round(Number($('customGift').value)*100);const fingerprint=selectedEvent.id+':'+cents+':'+$('guestMessage').value;
  if(!giftRequest||giftRequest.fingerprint!==fingerprint)giftRequest={fingerprint,id:crypto.randomUUID()};
  const data=await paymentRequest('/api/checkout',{event_id:selectedEvent.id,amount_cents:cents,message:$('guestMessage').value,request_id:giftRequest.id});

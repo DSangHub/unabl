@@ -72,8 +72,9 @@
         </button>
 
         <div class="relative">
-          <select id="langSelect" onchange="changeLanguage(this.value)" class="bg-slate-100 text-slate-700 text-xs sm:text-sm font-medium py-1.5 px-3 pr-8 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+          <select id="langSelect" aria-label="Language and region" onchange="changeLanguage(this.value)" class="bg-slate-100 text-slate-700 text-xs sm:text-sm font-medium py-1.5 px-3 pr-8 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
             <option value="en">English (US)</option>
+            <option value="en-GB">English (UK)</option>
             <option value="es">Español</option>
             <option value="hi">हिंदी (Hindi)</option>
             <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
@@ -83,6 +84,7 @@
             <option value="pt">Português</option>
           </select>
         </div>
+        <select id="currencySelect" aria-label="Currency" class="bg-slate-100 text-slate-700 text-xs sm:text-sm font-medium py-1.5 px-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500"><option value="USD">USD · US dollar ($)</option><option value="GBP">GBP · British pound (£)</option><option value="EUR">EUR · Euro (€)</option></select>
       </div>
     </div>
   </header>
@@ -210,7 +212,7 @@
           <!-- Monetary Gift ($10 - $1000) -->
           <div class="space-y-3">
             <div class="flex justify-between items-center">
-              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">3. Send Monetary Gift ($10 - $1,000)</label>
+              <label id="gift-range-label" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">3. Send Monetary Gift ($10 - $1,000)</label>
               <span class="text-xs text-slate-500">Secure Stripe Checkout</span>
             </div>
             
@@ -222,7 +224,7 @@
             </div>
 
             <div class="relative">
-              <span class="absolute left-3 top-2.5 text-slate-400 font-bold">$</span>
+              <span id="gift-currency-symbol" class="absolute left-3 top-2.5 text-slate-400 font-bold">$</span>
               <input type="number" id="customGift" min="10" max="1000" value="100" oninput="calculateFees(this.value)" class="w-full pl-7 pr-4 py-2 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-amber-500 focus:outline-none">
             </div>
 
@@ -237,7 +239,7 @@
                 <span id="breakdownUnabl">$2.00</span>
               </div>
               <div class="flex justify-between text-slate-500">
-                <span>Payment handling fee (2.9% + $0.30):</span>
+                <span id="handling-fee-label">Payment handling fee (2.9% + $0.30):</span>
                 <span id="breakdownStripe">$3.20</span>
               </div>
               <div class="border-t border-slate-200 pt-1 flex justify-between font-bold text-slate-900">
@@ -249,6 +251,7 @@
 
           <button id="rsvp-save" type="button" class="w-full border border-amber-700 text-amber-800 font-bold p-3 rounded-xl">Save RSVP & message</button><p id="event-status" role="status" aria-live="polite"></p>
 <!-- Submit Button -->
+          <p id="currency-notice" hidden role="status" class="text-sm text-amber-900 bg-amber-50 border border-amber-200 p-3 rounded-lg"></p>
           <button id="gift-checkout" type="button" class="w-full bg-amber-700 text-white font-bold py-3 rounded-xl">Send gift &amp; pay <span id="btnPayTotal">$105.20</span></button>
           <p class="text-sm text-slate-500">Gifts will be held for at least five days after successful payment and released only after the creator passes verification.</p>
           <div class="border border-amber-200 bg-amber-50 rounded-xl p-4 mt-4">
@@ -711,6 +714,8 @@
 
     // Language Change Logic with RTL Support
     function changeLanguage(lang) {
+      document.documentElement.lang=lang;
+      if(window.setUnablCurrency && ["en","en-GB"].includes(lang))window.setUnablCurrency(lang==="en-GB"?"GBP":"USD");
       const isRTL = ['ar', 'fa'].includes(lang);
       if (isRTL) {
         document.body.classList.add('rtl-layout');
@@ -780,11 +785,11 @@
       const stripeFee = (amount * 0.029) + 0.30;
       const total = amount + unablFee + stripeFee;
 
-      document.getElementById('breakdownGift').innerText = `$${amount.toFixed(2)}`;
-      document.getElementById('breakdownUnabl').innerText = `$${unablFee.toFixed(2)}`;
-      document.getElementById('breakdownStripe').innerText = `$${stripeFee.toFixed(2)}`;
-      document.getElementById('breakdownTotal').innerText = `$${total.toFixed(2)}`;
-      document.getElementById('btnPayTotal').innerText = `$${total.toFixed(2)}`;
+      document.getElementById('breakdownGift').innerText = window.formatUnablMoney ? window.formatUnablMoney(amount) : `$${amount.toFixed(2)}`;
+      document.getElementById('breakdownUnabl').innerText = window.formatUnablMoney ? window.formatUnablMoney(unablFee) : `$${unablFee.toFixed(2)}`;
+      document.getElementById('breakdownStripe').innerText = window.formatUnablMoney ? window.formatUnablMoney(stripeFee) : `$${stripeFee.toFixed(2)}`;
+      document.getElementById('breakdownTotal').innerText = window.formatUnablMoney ? window.formatUnablMoney(total) : `$${total.toFixed(2)}`;
+      document.getElementById('btnPayTotal').innerText = window.formatUnablMoney ? window.formatUnablMoney(total) : `$${total.toFixed(2)}`;
     }
 
     // Search Event Demo
@@ -833,6 +838,7 @@ const ecardSource='PCFkb2N0eXBlIGh0bWw+CjxodG1sIGxhbmc9ImVuIj4KPGhlYWQ+CjxtZXRhI
 function openEcard(gold){let html=new TextDecoder().decode(Uint8Array.from(atob(ecardSource),c=>c.charCodeAt(0)));if(gold)html=html.replace('id="upgrade" type="checkbox"','id="upgrade" type="checkbox" checked');document.getElementById('ecardEditor').srcdoc=html;document.getElementById('ecardDialog').showModal();}
 if(location.hash.startsWith('#card=')){let html=new TextDecoder().decode(Uint8Array.from(atob(ecardSource),c=>c.charCodeAt(0)));html=html.replace('const hash=location.hash;', 'const hash=window.parent.location.hash;');document.getElementById('ecardEditor').srcdoc=html;document.getElementById('ecardDialog').showModal();}
 </script>
+<script src="./currency.js"></script>
 <script type="module" src="./backend.js"></script>
 <script type="module" src="./faq.js"></script>
 </body>

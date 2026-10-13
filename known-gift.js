@@ -44,6 +44,7 @@ export function initKnownGift({db,getUser,getEvent}){
  $('gift-checkout').parentElement.append(panel);
  let prepared=null;
  function reset(){prepared=null;$('known-payments').hidden=true;$('known-share-panel').hidden=true;$('known-gift-reported').checked=false;$('known-fee-reported').checked=false;$('known-share').disabled=true;$('known-status').textContent='';}
+ window.addEventListener('unabl-currency-change',reset);
  function updateAmounts(){reset();const cents=Math.round(Number($('customGift').value)*100);$('known-gift-amount').textContent=money(cents);$('known-fee-amount').textContent=money(Math.round(cents*.02));}
  $('customGift').addEventListener('input',updateAmounts);$('customGift').addEventListener('change',updateAmounts);
  document.querySelectorAll('.gift-btn').forEach(button=>button.addEventListener('click',updateAmounts));
@@ -53,11 +54,11 @@ export function initKnownGift({db,getUser,getEvent}){
  $('known-preview').onclick=()=>{try{cardDialog(readCard());}catch(e){$('known-status').textContent=e.message;}};
  $('known-prepare').onclick=async()=>{
   const button=$('known-prepare');button.disabled=true;reset();
-  try{if(!$('known-creator').checked)throw Error('Confirm that you personally know this creator.');const card=readCard();const event=getEvent(),amount=Math.round(Number($('customGift').value)*100);if(!Number.isFinite(amount)||amount<1000||amount>100000)throw Error('Gift must be $10 to $1,000.');
+  try{if((window.unablCurrency||'USD')!=='USD')throw Error('Direct Venmo payments use US dollars. Select USD before continuing.');if(!$('known-creator').checked)throw Error('Confirm that you personally know this creator.');const card=readCard();const event=getEvent(),amount=Math.round(Number($('customGift').value)*100);if(!Number.isFinite(amount)||amount<1000||amount>100000)throw Error('Gift must be $10 to $1,000.');
    const {data:{session}}=await db.auth.getSession();if(!session)throw Error('Sign in and confirm your email first.');
    $('known-status').textContent='Looking up the creator’s Venmo profile…';
    const response=await fetch('/api/venmo-path',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify({event_id:event.id,amount_cents:amount,knows_creator:true})});const result=await response.json();if(!response.ok)throw Error(result.error||'Unable to prepare Venmo payments.');
-   if(getEvent()?.id!==event.id||Math.round(Number($('customGift').value)*100)!==amount||!$('known-creator').checked||JSON.stringify(readCard())!==JSON.stringify(card))throw Error('Your gift changed. Continue again to refresh payment details.');
+   if((window.unablCurrency||'USD')!=='USD'||getEvent()?.id!==event.id||Math.round(Number($('customGift').value)*100)!==amount||!$('known-creator').checked||JSON.stringify(readCard())!==JSON.stringify(card))throw Error('Your gift changed. Continue again to refresh payment details.');
    prepared={...result,eventId:event.id,card};$('known-recipient-detail').textContent=`Send ${money(result.gift_cents)} to @${result.recipient_username}. Enter this amount in Venmo.`;$('known-fee-detail').textContent=`Pay ${money(result.fee_cents)} separately to @${result.fee_username} for Unabl’s card and service fee.`;
    $('known-recipient-link').href=result.recipient_url;$('known-fee-link').href=result.fee_url;$('known-payments').hidden=false;$('known-status').textContent='Review both usernames before paying. Opening a profile does not send money.';
   }catch(e){$('known-status').textContent=e.message;}finally{button.disabled=false;}
