@@ -38,7 +38,7 @@
   
     .landing-layout{max-width:1600px;width:100%;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start;padding:0 20px}
     .landing-layout main{min-width:0;padding-left:0;padding-right:0}
-    .promotion-column{margin-top:24px;padding:20px;border:2px solid #c99b32;border-radius:18px;background:linear-gradient(135deg,#fff5cc,#e9c263 60%,#fff2b8);box-shadow:0 8px 24px #8d65121a;position:sticky;top:90px}
+    .promotion-column{margin-top:20px;padding:20px;border:2px solid #c99b32;border-radius:18px;background:linear-gradient(135deg,#fff5cc,#e9c263 60%,#fff2b8);box-shadow:0 8px 24px #8d65121a;position:sticky;top:90px}
     .promotion-column h2{font-size:25px;font-weight:800;line-height:1.15;color:#4d350c}
     .promotion-template{width:3in;height:5in;max-width:100%;margin:20px auto;padding:24px 15px;border:10px ridge #d4af37;box-sizing:border-box;background:#fffdf5;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:24px;overflow-wrap:anywhere;color:#3d2c12}
     .promotion-template .promo-name{font-family:'UnablGothic',Georgia,serif;font-size:30px;line-height:1.2}
@@ -502,6 +502,15 @@
     </div>
 
   </main>
+  <div class="landing-sidebar" style="min-width:0">
+  <aside id="send-flowers" aria-labelledby="flowers-title" class="bg-white border border-pink-200 rounded-2xl p-5 mt-6 shadow-sm">
+    <div aria-hidden="true" class="text-5xl mb-3">💐</div>
+    <h2 id="flowers-title" class="text-2xl font-extrabold text-slate-800">Send Flowers</h2>
+    <p class="text-slate-600 text-sm mt-2">Send a little joy, even when you can’t be there.</p>
+    <a href="https://www.ubereats.com/shopping/flowers-and-plants-327" target="_blank" rel="noopener noreferrer" class="block text-center bg-green-700 text-white rounded-xl px-4 py-3 font-bold mt-4">Uber Eats · Flowers <span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a>
+    <a href="https://www.doordash.com/p/flower-delivery" target="_blank" rel="noopener noreferrer" class="block text-center bg-red-600 text-white rounded-xl px-4 py-3 font-bold mt-3">DoorDash · Flowers <span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a>
+    <p class="text-xs text-slate-500 mt-4">Enter the recipient’s delivery address on your chosen service. Availability, prices, payment, and delivery are handled by that service.</p>
+  </aside>
   <aside class="promotion-column" aria-labelledby="promotion-title">
     <h2 id="promotion-title">Promote your Special Event</h2>
     <p class="text-sm mt-3" style="color:#60451b">Let your friends and family know in your chosen location.</p>
@@ -521,7 +530,8 @@
       <p id="promotion-status" role="status" aria-live="polite" class="text-sm mt-3"></p>
       <p class="text-xs mt-2" style="color:#60451b">Payment and local promotion publishing are coming soon. Saving a draft does not charge you or publish an ad.</p>
     </form>
-  </aside></div>
+  </aside>
+  </div></div>
 <section id="account" class="max-w-7xl mx-auto w-full p-4" style="scroll-margin-top:120px" aria-labelledby="account-title">
 <div class="bg-white border border-slate-200 rounded-2xl p-5 sm:p-8 max-w-xl mx-auto shadow-sm">
 <h2 id="account-title" class="text-2xl font-bold">Sign in to Unabl</h2>
