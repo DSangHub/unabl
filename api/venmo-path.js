@@ -21,7 +21,8 @@ export async function prepareVenmoPath(db,user,body,feeUsername){
  if(recipient.toLowerCase()===fee.toLowerCase())fail('The creator and Unabl fee accounts must be different.',409);
  return {...amounts,event_title:event.title,hashtag:event.hashtag,recipient_username:recipient,recipient_url:venmoProfile(recipient),fee_username:fee,fee_url:venmoProfile(fee),payment_status:'not_verified'};
 }
-export default route(async(req,res)=>{
+export default route(async(req,res)=>{fail('Knows now requires bank-only checkout. Direct Venmo links are no longer supported.',410);
+
  if(!process.env.SUPABASE_SECRET_KEY||!process.env.APP_URL)fail('Venmo setup is incomplete.',503);
  const db=createClient(process.env.SUPABASE_URL||'https://jbcxodpudujoscdafovx.supabase.co',process.env.SUPABASE_SECRET_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
  const user=await authenticate(req,db,new URL(process.env.APP_URL).origin);

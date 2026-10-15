@@ -44,3 +44,16 @@ The sender acknowledges knowing a published event’s creator. Creators can set 
 Set `VENMO_FEE_USERNAME` to Unabl’s actual Venmo business profile username in Vercel, then deploy. Until set, payment links remain unavailable; festive card previews still work. A $10 gift has a separate $0.20 service fee. Both amounts are entered and paid manually in Venmo; opening a profile link does not prefill or submit a payment. Venmo’s own fees may apply.
 
 Payment checkboxes are sender reports only, never payment confirmation. These direct gifts do not enter Stripe checkout, the five-day hold, paid gift records, verification, or paid vouch eligibility. Card links encode the greeting and sender name, which anyone holding the link can read. No API confirms receipt or fee collection. The recipient taps to open the closed festive card. The card is included in this 2% path; standard/gold card pricing remains separate.
+
+
+## Knows bank-only checkout (October 15)
+
+Knows replaces the retired direct Venmo handoff with Stripe-hosted US ACH checkout. It charges the gift plus the 2% Unabl fee; any bank processing costs are borne by the platform. No card-processing surcharge is added to this flow. The general monetary-gift checkout remains separate.
+
+Live activation is pending. The connected Stripe tool currently exposes Commentaid, not Unabl; do not configure Commentaid for this app. Confirm Stripe permits this precise personal-gifting model before activating.
+
+In Unabl's live Stripe account, create an active payment-method configuration named `Unabl Knows — US bank only`. Enable only US bank accounts / ACH Direct Debit, and disable every other method (including cards, Link, Apple Pay and Google Pay). Set its `pmc_...` ID in Vercel production as `STRIPE_BANK_PAYMENT_CONFIGURATION`, then redeploy. The server retrieves and checks that configuration on every Knows checkout; missing configuration, inactive ACH, any other enabled method or an environment mismatch blocks checkout before a session is created. The created session is checked again; a mixed-method session is expired and never returned to the browser.
+
+Subscribe the signed platform webhook to `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `charge.failed`, `charge.refunded`, and `charge.dispute.created`. Webhooks mark a bank gift paid only after a succeeded intent and ACH charge, with matching order total, currency and Stripe environment. Delayed confirmation is shown as pending. Returns, refunds and disputes block release and attempt transfer reversal. Automatic release remains disabled; minimum five-day hold, creator verification, paid vouches and fraud review still apply. Bank payments remain reversible.
+
+Do not claim a successful live bank-payment test until the correct Stripe account is connected, ACH is approved/configured, signed webhook subscriptions are verified, and a sandbox end-to-end test succeeds. Unit tests cover configuration rejection, bank-only quote, missing configuration and rejection of card-funded fulfillment. Existing Venmo helper tests are legacy only; `/api/venmo-path` now returns 410 and no payment links.

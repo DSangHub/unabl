@@ -1,22 +1,28 @@
+import {bankFees,bankConfiguration,onlyBankMethods} from '../lib/bank-checkout.js';
 import {randomUUID} from 'node:crypto';
 import {route,config,enabled,authenticate,check,fail,fees,uuid,accountStatus,stripeScope,inScope} from '../lib/payment.js';
 export default route(async(req,res)=>{
  enabled();const {stripe,db,origin}=config(),user=await authenticate(req,db,origin),body=req.body||{};
  if(!uuid(body.request_id)||!uuid(body.event_id))fail('Choose a published event and try again.');
- const amount=Number(body.amount_cents),quote=fees(amount);
+ const bankOnly=body.flow==='knows_bank';
+ if(bankOnly&&body.knows_creator!==true)fail('Confirm that you personally know this event creator.');
+ const amount=Number(body.amount_cents),quote=bankOnly?bankFees(amount):fees(amount);
+ const earlyScope=bankOnly?await stripeScope(stripe):null;
+ const bankConfig=bankOnly?await bankConfiguration(stripe,earlyScope):null;
  const event=check(await db.from('events').select('id,creator_id,title,published').eq('id',body.event_id).eq('published',true).maybeSingle());if(!event)fail('Event not found.',404);if(event.creator_id===user.id)fail('You cannot send a gift to yourself.');
  const readiness=await accountStatus(stripe,db,event.creator_id);if(!readiness.ready)fail('This creator must finish Stripe onboarding before receiving gifts.',409);
  const scope=await stripeScope(stripe);
  const prior=check(await db.from('checkout_orders').select('*').eq('request_id',body.request_id).maybeSingle());
  let order=prior;
- if(prior&&(prior.donor_id!==user.id||prior.event_id!==event.id||prior.gift_cents!==amount||prior.livemode!==scope.livemode||prior.stripe_platform_id!==scope.platform))fail('Payment request does not match.',409);
+ if(prior&&(prior.donor_id!==user.id||prior.event_id!==event.id||prior.gift_cents!==amount||prior.total_cents!==quote.total||prior.livemode!==scope.livemode||prior.stripe_platform_id!==scope.platform))fail('Payment request does not match.',409);
  if(!order){const row={id:randomUUID(),request_id:body.request_id,donor_id:user.id,event_id:event.id,creator_id:event.creator_id,gift_cents:amount,total_cents:quote.total,livemode:scope.livemode,stripe_platform_id:scope.platform,message:String(body.message||'').trim().slice(0,2000)};
  const result=await db.from('checkout_orders').insert(row).select().single();
  if(result.error?.code==='23505')order=check(await db.from('checkout_orders').select('*').eq('request_id',body.request_id).single());else order=check(result);
- if(order.donor_id!==user.id||order.event_id!==event.id||order.gift_cents!==amount||order.livemode!==scope.livemode||order.stripe_platform_id!==scope.platform)fail('Payment request does not match.',409);
+ if(order.donor_id!==user.id||order.event_id!==event.id||order.gift_cents!==amount||order.total_cents!==quote.total||order.livemode!==scope.livemode||order.stripe_platform_id!==scope.platform)fail('Payment request does not match.',409);
  }
  if(order.status==='paid')fail('This gift has already been paid.',409);
  const line=(name,cents)=>({price_data:{currency:'usd',unit_amount:cents,product_data:{name}},quantity:1});
- const session=await stripe.checkout.sessions.create({mode:'payment',client_reference_id:order.id,customer_email:user.email,integration_identifier:'unabl_gifts_hqmvkzra',line_items:[line('Gift: '+event.title,quote.gift),line('Unabl platform fee (2%)',quote.platform),line('Payment handling fee',quote.processing)],metadata:{order_id:order.id},payment_intent_data:{metadata:{order_id:order.id},transfer_group:'gift_'+order.id},success_url:origin+'/?payment=return&session_id={CHECKOUT_SESSION_ID}',cancel_url:origin+'/?payment=cancelled'}, {idempotencyKey:'checkout_'+order.id});
- check(await db.from('checkout_orders').update({stripe_session_id:session.id}).eq('id',order.id));res.json({url:session.url});
+ const session=await stripe.checkout.sessions.create({mode:'payment',...(bankOnly?{payment_method_configuration:bankConfig,payment_method_options:{us_bank_account:{verification_method:'instant',financial_connections:{permissions:['payment_method']}}}}:{}),client_reference_id:order.id,customer_email:user.email,integration_identifier:'unabl_gifts_hqmvkzra',line_items:[line('Gift: '+event.title,quote.gift),line('Unabl platform fee (2%)',quote.platform),...(quote.processing?[line('Payment handling fee',quote.processing)]:[])],metadata:{order_id:order.id,...(bankOnly?{flow:'knows_bank'}:{})},payment_intent_data:{metadata:{order_id:order.id,...(bankOnly?{flow:'knows_bank'}:{})},transfer_group:'gift_'+order.id},success_url:origin+'/?payment=return'+(bankOnly?'&knows_bank=return':'')+'&session_id={CHECKOUT_SESSION_ID}',cancel_url:origin+'/?payment=cancelled'}, {idempotencyKey:(bankOnly?'bank_checkout_':'checkout_')+order.id});
+ if(bankOnly&&!onlyBankMethods(session.payment_method_types)){await stripe.checkout.sessions.expire(session.id);fail('Bank-only checkout could not be verified. No charge has been made.',503);}
+ check(await db.from('checkout_orders').update({stripe_session_id:session.id}).eq('id',order.id));res.json({url:session.url,session_id:session.id});
 });
