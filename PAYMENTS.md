@@ -57,3 +57,12 @@ In Unabl's live Stripe account, create an active payment-method configuration na
 Subscribe the signed platform webhook to `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `charge.failed`, `charge.refunded`, and `charge.dispute.created`. Webhooks mark a bank gift paid only after a succeeded intent and ACH charge, with matching order total, currency and Stripe environment. Delayed confirmation is shown as pending. Returns, refunds and disputes block release and attempt transfer reversal. Automatic release remains disabled; minimum five-day hold, creator verification, paid vouches and fraud review still apply. Bank payments remain reversible.
 
 Do not claim a successful live bank-payment test until the correct Stripe account is connected, ACH is approved/configured, signed webhook subscriptions are verified, and a sandbox end-to-end test succeeds. Unit tests cover configuration rejection, bank-only quote, missing configuration and rejection of card-funded fulfillment. Existing Venmo helper tests are legacy only; `/api/venmo-path` now returns 410 and no payment links.
+# Invited guests and gift access codes
+
+Hosts manage private invited-email lists under My account → Your saved events.
+Each event also needs a generated gift access code. Share the code privately; invitations are not emailed automatically.
+Both gift checkout flows require the authenticated sender's confirmed email on the selected event's guest list and the current code.
+Only normalized code hashes are stored. Codes are returned to the host once at generation and never sent to Stripe metadata or saved in orders.
+Removing a guest or rotating a code blocks new checkout requests, but does not cancel already-open Stripe sessions.
+Existing events start with no invitations and no code; hosts must configure both before new gift checkout can open.
+

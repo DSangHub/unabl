@@ -1,5 +1,6 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm';
 import {initKnownGift} from './known-gift.js';
+import {mountGuestList} from './guest-list.js';
 let recovering=new URLSearchParams(location.hash.slice(1)).get('type')==='recovery';
 const db = createClient('https://jbcxodpudujoscdafovx.supabase.co', "sb_publishable_ZZvmnAgd81ui0_PkzopkaQ_-hGz88v_");
 const $ = id => document.getElementById(id);
@@ -29,7 +30,7 @@ async function myEvents(){
  $('my-events').replaceChildren();if(!user)return;
  const {data,error}=await db.from('events').select('id,title,hashtag,starts_at').eq('creator_id',user.id).order('created_at',{ascending:false});if(error)throw error;
  if(data.length){const heading=document.createElement('h3');heading.textContent='Your saved events';heading.className='font-bold';$('my-events').append(heading);}
- for(const event of data){const row=document.createElement('p');row.textContent=event.title+' — #'+event.hashtag+' — '+new Date(event.starts_at).toLocaleString();$('my-events').append(row);}
+ for(const event of data){const row=document.createElement('p');row.textContent=event.title+' — #'+event.hashtag+' — '+new Date(event.starts_at).toLocaleString();$('my-events').append(row);mountGuestList($('my-events'),event,paymentRequest);}
 }
 async function sync(session){user=session?.user||null;$('account-form').hidden=!!user&&!recovering;$('account-modes').hidden=!!user||recovering;$('header-signin').textContent=user?'My account':'Sign in';$('header-signup').hidden=!!user;$('account-signed-in').hidden=!user;if(user){$('account-user').textContent='Signed in as '+user.email;try{await profile();await myEvents();await refreshCreatorPanel();status('Your account is connected.');}catch(e){status(e.message);}}else{$('creator-verification-panel').hidden=true;$('my-events').replaceChildren();status('Sign in to save your profile, RSVP, or event.');}}
 const passwordInput=$('account-password');
@@ -133,11 +134,14 @@ $('promotion-form').addEventListener('submit',async e=>{
 });
 
 async function paymentRequest(path,body,method='POST'){
+ if(path==='/api/checkout')body={...body,access_code:$('gift-access-code').value};
  const {data:{session}}=await db.auth.getSession();if(!session)throw Error('Sign in and confirm your email first.');
  const response=await fetch(path,{method,headers:{'Authorization':'Bearer '+session.access_token,'Content-Type':'application/json'},...(method==='POST'?{body:JSON.stringify(body)}:{})});
  const data=await response.json();if(!response.ok)throw Error(data.error||'Unable to connect.');return data;
 }
 let giftRequest=null;
+const codeLabel=document.createElement('label');codeLabel.textContent='Gift access code from your host';codeLabel.className='block my-3 text-sm font-semibold';
+const codeInput=document.createElement('input');codeInput.id='gift-access-code';codeInput.type='text';codeInput.autocomplete='off';codeInput.maxLength=29;codeInput.placeholder='XXXX-XXXX-XXXX-XXXX-XXXX-XXXX';codeInput.style.cssText='display:block;width:100%;padding:10px;border:1px solid #94a3b8;border-radius:8px';codeLabel.append(codeInput);$('gift-checkout').before(codeLabel);
 $('gift-checkout').addEventListener('click',async()=>{
  const button=$('gift-checkout');button.disabled=true;
  try{if((window.unablCurrency||'USD')!=='USD')throw Error('GBP and EUR are preview currencies. Select USD to use the current checkout.');if(!selectedEvent)throw Error('Find a published event by hashtag first. Sample celebrations cannot receive payments.');

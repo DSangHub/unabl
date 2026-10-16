@@ -1,5 +1,6 @@
 import {bankFees,bankConfiguration,onlyBankMethods} from '../lib/bank-checkout.js';
 import {randomUUID} from 'node:crypto';
+import {requireInvitedGuest,requireGiftCode} from '../lib/event-guests.js';
 import {route,config,enabled,authenticate,check,fail,fees,uuid,accountStatus,stripeScope,inScope} from '../lib/payment.js';
 export default route(async(req,res)=>{
  enabled();const {stripe,db,origin}=config(),user=await authenticate(req,db,origin),body=req.body||{};
@@ -10,6 +11,8 @@ export default route(async(req,res)=>{
  const earlyScope=bankOnly?await stripeScope(stripe):null;
  const bankConfig=bankOnly?await bankConfiguration(stripe,earlyScope):null;
  const event=check(await db.from('events').select('id,creator_id,title,published').eq('id',body.event_id).eq('published',true).maybeSingle());if(!event)fail('Event not found.',404);if(event.creator_id===user.id)fail('You cannot send a gift to yourself.');
+ await requireInvitedGuest(db,event.id,user);
+ await requireGiftCode(db,event.id,body.access_code);
  const readiness=await accountStatus(stripe,db,event.creator_id);if(!readiness.ready)fail('This creator must finish Stripe onboarding before receiving gifts.',409);
  const scope=await stripeScope(stripe);
  const prior=check(await db.from('checkout_orders').select('*').eq('request_id',body.request_id).maybeSingle());

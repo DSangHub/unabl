@@ -54,7 +54,7 @@ export function initKnownGift({db,getUser,getEvent}){
    const fingerprint=JSON.stringify({event:event.id,amount,card});if(!request||request.fingerprint!==fingerprint)request={fingerprint,id:crypto.randomUUID()};
    // Save a draft before checkout, so a storage failure cannot leave an orphaned session.
    sessionStorage.setItem('unabl-bank-card',JSON.stringify({card,request_id:request.id}));
-   $('known-status').textContent='Preparing bank-only checkout…';const result=await api('/api/checkout',{flow:'knows_bank',knows_creator:true,event_id:event.id,amount_cents:amount,message:card.message,request_id:request.id});
+   $('known-status').textContent='Preparing bank-only checkout…';const result=await api('/api/checkout',{flow:'knows_bank',knows_creator:true,event_id:event.id,amount_cents:amount,message:card.message,request_id:request.id,access_code:$('gift-access-code').value});
    sessionStorage.setItem('unabl-bank-card',JSON.stringify({card,session_id:result.session_id}));location.assign(result.url);
   }catch(error){$('known-status').textContent=error.message;}finally{button.disabled=false;}
  };
