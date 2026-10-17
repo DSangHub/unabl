@@ -66,3 +66,8 @@ Only normalized code hashes are stored. Codes are returned to the host once at g
 Removing a guest or rotating a code blocks new checkout requests, but does not cancel already-open Stripe sessions.
 Existing events start with no invitations and no code; hosts must configure both before new gift checkout can open.
 
+# Direct wallet gifts
+
+Optional direct gifts use Apple Cash or Samsung Wallet outside Unabl checkout. Unabl fee is $0; provider fees and limits may apply. US Google Pay P2P sending is unavailable, so no Google Pay send button is advertised.
+Hosts opt in by saving wallet contact details under Manage invited guests. The server discloses contacts only to confirmed invited guests with the current event access code. No card or bank numbers are collected. The guest copies the recipient and completes the transfer in their wallet app; there is no embedded wallet API or automatic transfer.
+These gifts do not enter Stripe, do not count toward paid vouches, and do not use Unabl's hold, release, payment verification, or refund workflow. No manual "paid" checkbox is provided. Existing Stripe gift checkout retains its own fees and requirements.

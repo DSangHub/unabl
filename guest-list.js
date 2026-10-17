@@ -11,6 +11,10 @@ export function mountGuestList(container,event,request){
  form.append(label,add);panel.append(form);
  const status=document.createElement('p'),list=document.createElement('ul');status.setAttribute('role','status');panel.append(status,list);container.append(panel);
  let loaded=false,busy=false;
+ const walletForm=document.createElement('form');
+ walletForm.innerHTML='<h4 class="font-bold mt-4">Direct gifts · $0 Unabl fee</h4><p class="text-sm">Optional: share only the phone/email registered with your wallet. No bank or card numbers. Guests complete the transfer in their own app; provider fees and limits may apply.</p><label class="block mt-2">Apple Cash phone or email<input data-apple maxlength="254" style="display:block;width:100%;padding:8px;border:1px solid #94a3b8;border-radius:6px"></label><label class="block mt-2">Samsung Wallet phone<input data-samsung type="tel" maxlength="25" style="display:block;width:100%;padding:8px;border:1px solid #94a3b8;border-radius:6px"></label><label class="block my-2"><input data-share type="checkbox" required> Share these contacts with confirmed invited guests who enter my gift code.</label><button type="submit" class="btn-primary">Save direct-gift contacts</button>';
+ panel.append(walletForm);
+ walletForm.onsubmit=async e=>{e.preventDefault();const button=walletForm.querySelector('button');button.disabled=true;try{await request('/api/event-guests',{event_id:event.id,action:'save_contacts',apple_cash:walletForm.querySelector('[data-apple]').value,samsung_wallet:walletForm.querySelector('[data-samsung]').value,share_with_guests:walletForm.querySelector('[data-share]').checked});status.textContent='Direct-gift contacts saved. Leave a field empty to disable that option.';}catch(e){status.textContent=e.message;}finally{button.disabled=false;}};
  const generate=document.createElement('button'),code=document.createElement('input'),codeHelp=document.createElement('p');
  generate.type='button';generate.textContent='Generate / replace gift access code';generate.className='btn-primary mt-3';code.readOnly=true;code.hidden=true;code.setAttribute('aria-label','New gift access code');code.style.cssText='width:100%;padding:10px;font-family:monospace';
  codeHelp.textContent='Generate a code and share it privately with invited guests. A replacement blocks the old code on new checkout requests. Already-open checkout sessions may still complete. The code is shown only when generated.';
@@ -18,6 +22,7 @@ export function mountGuestList(container,event,request){
  generate.addEventListener('click',async()=>{if(busy)return;if(!confirm('Generate a new code? Any previous code will stop working for new checkout requests.'))return;busy=true;generate.disabled=true;try{const result=await request('/api/event-guests',{event_id:event.id,action:'generate_code'});code.value=result.code;code.hidden=false;code.select();status.textContent='New code generated. Copy it and share it privately with your invited guests.';}catch(e){status.textContent=e.message;}finally{busy=false;generate.disabled=false;}});
  async function load(){
   const data=await request('/api/event-guests?event_id='+encodeURIComponent(event.id),null,'GET');
+  walletForm.querySelector('[data-apple]').value=data.contacts?.apple_cash||'';walletForm.querySelector('[data-samsung]').value=data.contacts?.samsung_wallet||'';
   list.replaceChildren();
   for(const guest of data.guests){
    const row=document.createElement('li'),name=document.createElement('span'),remove=document.createElement('button');
