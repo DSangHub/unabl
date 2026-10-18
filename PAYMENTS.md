@@ -37,14 +37,9 @@ Live Stripe account: acct_1UNd1GAc94GIAuXA. Production stores separate platform 
 Apply `20261009205528_stripe_live_isolation.sql` before deploying this branch. The migration preserves sandbox account/order/payment records, adds platform and mode columns, changes connected-account uniqueness to creator plus platform, scopes gift release jobs, excludes sandbox vouches from live verification, and clears sandbox-derived Stripe capability flags. It does not delete payment history or approve identity reviews. Automatic approval review blocked application pending explicit approval.
 
 Keep PAYMENTS_ENABLED=false and RELEASES_ENABLED=false until live key validation and recipient onboarding pass. Existing sandbox connected accounts and test bank data cannot receive live gifts. Creators must use My account → Connect bank with Stripe to create a live recipient account, then complete Stripe's real identity and bank requirements. A Stripe return URL alone does not prove readiness; the server retrieves current recipient capability status.
-# Direct Venmo “Knows” path
+# Legacy Venmo helper
 
-The sender acknowledges knowing a published event’s creator. Creators can set a public Venmo username in My account (Supabase user metadata, contact preference only; never used for authorization or identity approval). `/api/venmo-path` authenticates the confirmed sender, looks up the published event and its creator on the server, and returns the creator’s validated profile link and a separate Unabl fee link. It performs no charge, payout, or database payment write.
-
-Set `VENMO_FEE_USERNAME` to Unabl’s actual Venmo business profile username in Vercel, then deploy. Until set, payment links remain unavailable; festive card previews still work. A $10 gift has a separate $0.20 service fee. Both amounts are entered and paid manually in Venmo; opening a profile link does not prefill or submit a payment. Venmo’s own fees may apply.
-
-Payment checkboxes are sender reports only, never payment confirmation. These direct gifts do not enter Stripe checkout, the five-day hold, paid gift records, verification, or paid vouch eligibility. Card links encode the greeting and sender name, which anyone holding the link can read. No API confirms receipt or fee collection. The recipient taps to open the closed festive card. The card is included in this 2% path; standard/gold card pricing remains separate.
-
+The old `/api/venmo-path` endpoint remains retired (410). The current direct wallet portal below replaces that handoff. The legacy helper uses a flat $1.75 amount instead of the former 2%; it does not charge or verify payments.
 
 ## Knows bank-only checkout (October 15)
 
@@ -68,6 +63,10 @@ Existing events start with no invitations and no code; hosts must configure both
 
 # Direct wallet gifts
 
-Optional direct gifts use Apple Cash or Samsung Wallet outside Unabl checkout. Unabl fee is $0; provider fees and limits may apply. US Google Pay P2P sending is unavailable, so no Google Pay send button is advertised.
+Optional direct gifts use Apple Cash, Samsung Wallet, or Venmo outside Stripe checkout. Each gift handoff has a flat $1.75 Unabl click fee, paid manually and separately to @UnablPay through Venmo. There is no percentage fee for these direct gifts; provider fees and limits may apply. US Google Pay P2P sending is unavailable, so no Google Pay send button is advertised.
 Hosts opt in by saving wallet contact details under Manage invited guests. The server discloses contacts only to confirmed invited guests with the current event access code. No card or bank numbers are collected. The guest copies the recipient and completes the transfer in their wallet app; there is no embedded wallet API or automatic transfer.
 These gifts do not enter Stripe, do not count toward paid vouches, and do not use Unabl's hold, release, payment verification, or refund workflow. No manual "paid" checkbox is provided. Existing Stripe gift checkout retains its own fees and requirements.
+
+Guests choose a configured wallet, open https://venmo.com/UnablPay in a separate tab/app, manually enter $1.75 and the fee note, then switch back and select Return to Gift Portal. The portal shows host contact details/instructions. Opening the fee link does not submit a payment, and return is navigation only, never evidence of a paid fee. No automatic callback, fee enforcement, receipt verification, or charge on click is implemented. Repeated navigation does not execute payments. Fee and host gift both remain unverified; the guest keeps both receipts. An automatic paid-only return would require a supported provider checkout and signed confirmation integration.
+
+The event's optional Venmo contact is stored alongside Apple/Samsung contacts in the server-only event_direct_contacts table. Saving contacts requires event ownership; revealing them retains confirmed-email invitation and current-code checks. @UnablPay cannot be saved as the host Venmo recipient. Stripe bank and general gift checkout pricing is unchanged.
