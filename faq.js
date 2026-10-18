@@ -1,3 +1,4 @@
+import './how-it-works.js';
 const form=document.getElementById('faq-form');
 if(form){
  form.addEventListener('submit',async event=>{
