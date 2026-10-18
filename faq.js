@@ -1,3 +1,4 @@
+import './direct-send.js';
 import './how-it-works.js';
 const form=document.getElementById('faq-form');
 if(form){
