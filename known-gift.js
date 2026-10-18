@@ -1,3 +1,5 @@
+import {clickFeeCents} from './gift-fees.js';
+import {venmoFeeStep} from './stripe-fee-step.js';
 const money=cents=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(cents/100);
 const username=value=>/^[A-Za-z0-9_-]{5,30}$/.test(value.trim().replace(/^@/,''));
 const $=id=>document.getElementById(id);
@@ -34,17 +36,17 @@ export function initKnownGift({db,getUser,getEvent}){
  <p style="font-size:1.2rem;font-weight:900;color:#9f1239;border:2px solid #be123c;padding:12px;border-radius:10px">No Credit Cards Accepted</p>
  <small>Knows accepts verified US bank accounts (ACH) only. Debit cards, credit cards, and card-funded wallets are not accepted. This reduces card exposure; bank payments can still fail, be disputed, or be reversed.</small>
  <label><input id="known-creator" type="checkbox"> I know this event creator personally.</label>
- <p><strong>Gift: <span id="known-gift-amount"></span> · Unabl fee (2%): <span id="known-fee-amount"></span> · Total: <span id="known-total"></span></strong></p>
- <small>Bank verification and payment authorization happen on Stripe. Payments can take several business days to confirm. The minimum five-day hold starts after successful payment. Creator verification and release requirements still apply.</small>
+ <p><strong>Gift: <span id="known-gift-amount"></span> · Unabl click fee via Venmo (separate): <span id="known-fee-amount"></span> · Stripe checkout total: <span id="known-total"></span></strong></p>
+ <small>Pay the tiered click fee separately to @UnablPay through Venmo. It is not included in Stripe’s total and cannot be verified automatically. Bank verification and payment authorization happen on Stripe. Payments can take several business days to confirm. The minimum five-day hold starts after successful payment. Creator verification and release requirements still apply.</small>
  <label>Your name on the card<input id="known-from" maxlength="60" placeholder="Your name" autocomplete="given-name"></label>
  <small>Write your 1–1,200 character message in the guest message box above. Card links contain the message; anyone with the link can read it.</small>
- <div class="known-actions"><button type="button" id="known-preview" class="known-button known-outline">Preview festive card</button><button type="button" id="known-prepare" class="known-button">Continue with bank account</button><button type="button" id="known-check" class="known-button known-outline" hidden>Check bank payment status</button></div>
+ <div class="known-actions"><button type="button" id="known-preview" class="known-button known-outline">Preview festive card</button><button type="button" id="known-prepare" class="known-button">Pay Venmo click fee & continue with bank account</button><button type="button" id="known-check" class="known-button known-outline" hidden>Check bank payment status</button></div>
  <p id="known-status" role="status" aria-live="polite"></p>
  <div id="known-share-panel" hidden><label>Festive card link<input id="known-share-link" readonly></label><button id="known-copy-card" type="button" class="known-button">Copy card link</button><small>The card link itself is not a payment receipt.</small></div>`;
  $('gift-checkout').parentElement.append(panel);
  let request=null;
  function readCard(){const event=getEvent();if(!event?.id)throw Error('Find a published event by hashtag first.');const message=$('guestMessage').value.trim(),from=$('known-from').value.trim();if(!message||message.length>1200)throw Error('Write a card message of 1–1,200 characters above.');if(!from)throw Error('Add your name on the card.');return {title:event.title,message,from};}
- function updateAmounts(){const cents=Math.round(Number($('customGift').value)*100);$('known-gift-amount').textContent=money(cents);$('known-fee-amount').textContent=money(Math.round(cents*.02));$('known-total').textContent=money(cents+Math.round(cents*.02));}
+ function updateAmounts(){const cents=Math.round(Number($('customGift').value)*100);$('known-gift-amount').textContent=money(cents);$('known-fee-amount').textContent=money(clickFeeCents(Math.max(1000,Math.min(100000,Number.isFinite(cents)?cents:1000))));$('known-total').textContent=money(cents);}
  $('customGift').addEventListener('input',updateAmounts);$('customGift').addEventListener('change',updateAmounts);document.querySelectorAll('.gift-btn').forEach(button=>button.addEventListener('click',updateAmounts));
  $('known-preview').onclick=()=>{try{cardDialog(readCard());}catch(error){$('known-status').textContent=error.message;}};
  async function api(path,body){const {data:{session}}=await db.auth.getSession();if(!session)throw Error('Sign in and confirm your email first.');const response=await fetch(path,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+session.access_token,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});const result=await response.json();if(!response.ok)throw Error(result.error||'Unable to connect.');return result;}
@@ -54,7 +56,7 @@ export function initKnownGift({db,getUser,getEvent}){
    const fingerprint=JSON.stringify({event:event.id,amount,card});if(!request||request.fingerprint!==fingerprint)request={fingerprint,id:crypto.randomUUID()};
    // Save a draft before checkout, so a storage failure cannot leave an orphaned session.
    sessionStorage.setItem('unabl-bank-card',JSON.stringify({card,request_id:request.id}));
-   $('known-status').textContent='Preparing bank-only checkout…';const result=await api('/api/checkout',{flow:'knows_bank',knows_creator:true,event_id:event.id,amount_cents:amount,message:card.message,request_id:request.id,access_code:$('gift-access-code').value});
+   await api('/api/checkout',{action:'quote',flow:'knows_bank',knows_creator:true,event_id:event.id,amount_cents:amount,request_id:request.id,access_code:$('gift-access-code').value});await venmoFeeStep({amount,requestId:request.id});$('known-status').textContent='Preparing bank-only checkout…';const result=await api('/api/checkout',{flow:'knows_bank',knows_creator:true,event_id:event.id,amount_cents:amount,message:card.message,request_id:request.id,access_code:$('gift-access-code').value});
    sessionStorage.setItem('unabl-bank-card',JSON.stringify({card,session_id:result.session_id}));location.assign(result.url);
   }catch(error){$('known-status').textContent=error.message;}finally{button.disabled=false;}
  };

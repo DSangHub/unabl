@@ -1,4 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm';
+import {venmoFeeStep,initStripeFeeQuote} from './stripe-fee-step.js';
 import {initKnownGift} from './known-gift.js';
 import {mountGuestList} from './guest-list.js';
 import {initVoiceGreeting} from './voice-greeting.js';
@@ -150,6 +151,8 @@ $('gift-checkout').addEventListener('click',async()=>{
  try{if((window.unablCurrency||'USD')!=='USD')throw Error('GBP and EUR are preview currencies. Select USD to use the current checkout.');if(!selectedEvent)throw Error('Find a published event by hashtag first. Sample celebrations cannot receive payments.');
  const cents=Math.round(Number($('customGift').value)*100);const fingerprint=selectedEvent.id+':'+cents+':'+$('guestMessage').value;
  if(!giftRequest||giftRequest.fingerprint!==fingerprint)giftRequest={fingerprint,id:crypto.randomUUID()};
+ await paymentRequest('/api/checkout',{action:'quote',event_id:selectedEvent.id,amount_cents:cents,request_id:giftRequest.id,access_code:$('gift-access-code').value});
+ await venmoFeeStep({amount:cents,requestId:giftRequest.id});
  const data=await paymentRequest('/api/checkout',{event_id:selectedEvent.id,amount_cents:cents,message:$('guestMessage').value,request_id:giftRequest.id});
  window.location.assign(data.url);
  }catch(e){$('event-status').textContent=e.message;}finally{button.disabled=false;}
@@ -206,3 +209,5 @@ initDirectGift({request:paymentRequest,getEvent:()=>selectedEvent});
 initVoiceGreeting({request:paymentRequest});
 
 initGuestAlbum({db,request:paymentRequest,getEvent:()=>selectedEvent});
+
+initStripeFeeQuote();

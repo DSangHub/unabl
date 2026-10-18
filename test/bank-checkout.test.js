@@ -4,7 +4,7 @@ import {bankFees,validateBankConfiguration,bankConfiguration,onlyBankMethods} fr
 import {fulfill} from '../lib/webhooks.js';
 const method=value=>({available:true,display_preference:{value}});
 const config=()=>({id:'pmc_bank',active:true,livemode:true,us_bank_account:method('on'),card:method('off'),link:method('off'),apple_pay:method('off')});
-test('Knows quote adds only 2% and respects gift limits',()=>{assert.deepEqual(bankFees(1000),{gift:1000,platform:20,processing:0,total:1020});assert.throws(()=>bankFees(999));});
+test('Knows quote keeps the Venmo click fee outside the bank charge',()=>{assert.deepEqual(bankFees(1000),{gift:1000,platform:0,click:175,processing:0,total:1000});assert.throws(()=>bankFees(999));});
 test('bank config rejects cards, wallets, other rails, missing ACH and wrong environment',()=>{validateBankConfiguration(config(),{livemode:true});for(const key of ['card','link','apple_pay','google_pay','klarna','sepa_debit'])assert.throws(()=>validateBankConfiguration({...config(),[key]:method('on')},{livemode:true}));assert.throws(()=>validateBankConfiguration(config(),{livemode:false}));assert.throws(()=>validateBankConfiguration({...config(),us_bank_account:method('off')},{livemode:true}));});
 test('missing bank configuration fails closed without Stripe calls',async()=>{delete process.env.STRIPE_BANK_PAYMENT_CONFIGURATION;await assert.rejects(bankConfiguration({}, {livemode:true}),/being configured/);});
 test('session must expose only US bank accounts',()=>{assert.equal(onlyBankMethods(['us_bank_account']),true);for(const methods of [[],['card'],['us_bank_account','card'],undefined])assert.equal(onlyBankMethods(methods),false);});

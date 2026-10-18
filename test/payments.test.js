@@ -6,7 +6,7 @@ import {fulfill,processEvent} from '../lib/webhooks.js';
 import webhook from '../api/stripe-webhook.js';
 import {Readable} from 'node:stream';
 function response(){return {headers:{},setHeader(k,v){this.headers[k]=v},status(n){this.code=n;return this},json(body){this.body=body;return this}};}
-test('gift limits and server fee calculation',()=>{assert.deepEqual(fees(10000),{gift:10000,platform:200,processing:320,total:10520});for(const v of [999,100001,1000.1,NaN])assert.throws(()=>fees(v));});
+test('gift limits and server fee calculation',()=>{assert.deepEqual(fees(10000),{gift:10000,platform:0,click:175,processing:320,total:10320});for(const v of [999,100001,1000.1,NaN])assert.throws(()=>fees(v));});
 test('v2 recipient capability only',()=>{assert.equal(active({payouts_enabled:true}),false);assert.equal(active({configuration:{recipient:{capabilities:{stripe_balance:{stripe_transfers:{status:'active'}}}}}}),true);});
 test('cron rejects missing or incorrect credentials',()=>{process.env.CRON_SECRET='test-cron';assert.equal(cronAuthorized('Bearer wrong'),false);assert.equal(cronAuthorized('Bearer test-cron'),true);});
 test('auth rejects absent token, other origin and unconfirmed users',async()=>{const db={auth:{getUser:async()=>({data:{user:{email_confirmed_at:null}}})}};await assert.rejects(authenticate({headers:{}},db,'https://www.unabl.app'));await assert.rejects(authenticate({headers:{origin:'https://evil.example'}},db,'https://www.unabl.app'));await assert.rejects(authenticate({headers:{authorization:'Bearer token'}},db,'https://www.unabl.app'));});

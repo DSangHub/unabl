@@ -1,6 +1,6 @@
 # Unabl gift payments
 
-Gift checkout uses Stripe-hosted Checkout with prices calculated on the server. The platform collects the gift plus a 2% platform fee and payment handling fee of 2.9% + $0.30. The handling fee is a product price, not a statement of Stripe's actual fees. Standard and gold standalone card carts and promotion drafts remain separate and do not yet collect payment.
+Gift checkout uses Stripe-hosted Checkout with prices calculated on the server. New standard Stripe checkouts collect only the gift plus the displayed handling fee of 2.9% + $0.30. Unabl’s former 2% platform fee is removed. The Unabl click fee is paid separately to @UnablPay through Venmo: $10–$100 inclusive $1.75; over $100–$500 inclusive $2.95; over $500–$1,000 $4.95. It is excluded from Stripe totals. The handling fee is a product price, not a statement of Stripe's actual fees. Standard and gold standalone card carts and promotion drafts remain separate and do not yet collect payment.
 
 ## Required Vercel production configuration
 
@@ -43,7 +43,7 @@ The old `/api/venmo-path` endpoint remains retired (410). The current direct wal
 
 ## Knows bank-only checkout (October 15)
 
-Knows replaces the retired direct Venmo handoff with Stripe-hosted US ACH checkout. It charges the gift plus the 2% Unabl fee; any bank processing costs are borne by the platform. No card-processing surcharge is added to this flow. The general monetary-gift checkout remains separate.
+Knows replaces the retired direct Venmo handoff with Stripe-hosted US ACH checkout. New bank checkout charges only the gift through Stripe; the tiered click fee is paid separately via Venmo; any bank processing costs are borne by the platform. No card-processing surcharge is added to this flow. The general monetary-gift checkout remains separate.
 
 Live activation is pending. The connected Stripe tool currently exposes Commentaid, not Unabl; do not configure Commentaid for this app. Confirm Stripe permits this precise personal-gifting model before activating.
 
@@ -70,3 +70,9 @@ These gifts do not enter Stripe, do not count toward paid vouches, and do not us
 Guests choose a configured wallet, open https://venmo.com/UnablPay in a separate tab/app, manually enter $1.75 and the fee note, then switch back and select Return to Gift Portal. The portal shows host contact details/instructions. Opening the fee link does not submit a payment, and return is navigation only, never evidence of a paid fee. No automatic callback, fee enforcement, receipt verification, or charge on click is implemented. Repeated navigation does not execute payments. Fee and host gift both remain unverified; the guest keeps both receipts. An automatic paid-only return would require a supported provider checkout and signed confirmation integration.
 
 The event's optional Venmo contact is stored alongside Apple/Samsung contacts in the server-only event_direct_contacts table. Saving contacts requires event ownership; revealing them retains confirmed-email invitation and current-code checks. @UnablPay cannot be saved as the host Venmo recipient. Stripe bank and general gift checkout pricing is unchanged.
+
+# Tiered click fee for new Stripe gifts (October 18)
+
+Both standard and bank-only Stripe gifts use gift-fees.js for exact cent boundaries (10000/50000). Server quotes validate recipient readiness, confirmed invitation/code and bank configuration before offering the Venmo fee handoff. The handoff opens https://venmo.com/UnablPay, instructs manual entry of the tier fee, and offers a manual Return to Gift Portal & continue to Stripe button. Fee payment is never verified or automatically collected. A return acknowledgement is remembered only for retries of the same request in the current page; it is not a paid record. Don't repay the fee when retrying a failed Stripe setup. Refreshes/new gift requests can present the fee step again; guests should keep receipts and avoid duplicate fees.
+
+Stripe Checkout line items exclude the Unabl fee and metadata marks fee_collection=venmo_manual. Standard Stripe totals still include the existing displayed handling fee; bank-only totals are gift-only. Album service pricing and the separate direct-wallet flat $1.75 path are unchanged. Existing already-open legacy Stripe sessions may retain their original pricing and can still fulfill against their saved order totals. The UI and FAQ explain the new split totals. No migration or real transfer is performed for this change.
