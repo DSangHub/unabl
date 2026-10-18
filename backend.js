@@ -2,6 +2,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import {initKnownGift} from './known-gift.js';
 import {mountGuestList} from './guest-list.js';
 import {initVoiceGreeting} from './voice-greeting.js';
+import {mountHostAlbum,initGuestAlbum} from './album.js';
 import {initDirectGift} from './direct-gift.js';
 let recovering=new URLSearchParams(location.hash.slice(1)).get('type')==='recovery';
 const db = createClient('https://jbcxodpudujoscdafovx.supabase.co', "sb_publishable_ZZvmnAgd81ui0_PkzopkaQ_-hGz88v_");
@@ -32,7 +33,7 @@ async function myEvents(){
  $('my-events').replaceChildren();if(!user)return;
  const {data,error}=await db.from('events').select('id,title,hashtag,starts_at').eq('creator_id',user.id).order('created_at',{ascending:false});if(error)throw error;
  if(data.length){const heading=document.createElement('h3');heading.textContent='Your saved events';heading.className='font-bold';$('my-events').append(heading);}
- for(const event of data){const row=document.createElement('p');row.textContent=event.title+' — #'+event.hashtag+' — '+new Date(event.starts_at).toLocaleString();$('my-events').append(row);mountGuestList($('my-events'),event,paymentRequest);}
+ for(const event of data){const row=document.createElement('p');row.textContent=event.title+' — #'+event.hashtag+' — '+new Date(event.starts_at).toLocaleString();$('my-events').append(row);mountGuestList($('my-events'),event,paymentRequest);mountHostAlbum($('my-events'),event,paymentRequest);}
 }
 async function sync(session){user=session?.user||null;window.dispatchEvent(new Event('unabl-account-change'));$('account-form').hidden=!!user&&!recovering;$('account-modes').hidden=!!user||recovering;$('header-signin').textContent=user?'My account':'Sign in';$('header-signup').hidden=!!user;$('account-signed-in').hidden=!user;if(user){$('account-user').textContent='Signed in as '+user.email;try{await profile();await myEvents();await refreshCreatorPanel();status('Your account is connected.');}catch(e){status(e.message);}}else{$('creator-verification-panel').hidden=true;$('my-events').replaceChildren();status('Sign in to save your profile, RSVP, or event.');}}
 const passwordInput=$('account-password');
@@ -203,3 +204,5 @@ giftOptions.append(otherGift);
 initKnownGift({db,getUser:()=>user,getEvent:()=>selectedEvent});
 initDirectGift({request:paymentRequest,getEvent:()=>selectedEvent});
 initVoiceGreeting({request:paymentRequest});
+
+initGuestAlbum({db,request:paymentRequest,getEvent:()=>selectedEvent});
