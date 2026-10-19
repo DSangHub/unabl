@@ -213,7 +213,7 @@
           <div class="space-y-3">
             <div class="flex justify-between items-center">
               <label id="gift-range-label" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">3. Send Monetary Gift ($10 - $1,000)</label>
-              <span class="text-xs text-slate-500">Secure Stripe Checkout</span>
+              <span class="text-xs text-slate-500">Direct Venmo / Cash App</span>
             </div>
             
             <div class="grid grid-cols-4 gap-2">
@@ -235,16 +235,16 @@
                 <span class="font-bold text-slate-900" id="breakdownGift">$100.00</span>
               </div>
               <div class="flex justify-between text-slate-500">
-                <span>Unabl Platform Fee (2%):</span>
-                <span id="breakdownUnabl">$2.00</span>
+                <span>Unabl click fee (separate Venmo payment):</span>
+                <span id="breakdownUnabl">$1.75</span>
               </div>
               <div class="flex justify-between text-slate-500">
-                <span id="handling-fee-label">Payment handling fee (2.9% + $0.30):</span>
-                <span id="breakdownStripe">$3.20</span>
+                <span id="handling-fee-label">Unabl processing surcharge:</span>
+                <span id="breakdownStripe">$0.00</span>
               </div>
               <div class="border-t border-slate-200 pt-1 flex justify-between font-bold text-slate-900">
-                <span>Total Payment:</span>
-                <span id="breakdownTotal" class="text-amber-600">$105.20</span>
+                <span>Gift + separate Unabl fee:</span>
+                <span id="breakdownTotal" class="text-amber-600">$101.75</span>
               </div>
             </div>
           </div>
@@ -252,9 +252,9 @@
           <button id="rsvp-save" type="button" class="w-full border border-amber-700 text-amber-800 font-bold p-3 rounded-xl">Save RSVP & message</button><p id="event-status" role="status" aria-live="polite"></p>
 <!-- Submit Button -->
           <p id="currency-notice" hidden role="status" class="text-sm text-amber-900 bg-amber-50 border border-amber-200 p-3 rounded-lg"></p>
-          <button id="gift-checkout" type="button" class="w-full bg-amber-700 text-white font-bold py-3 rounded-xl">Send gift &amp; pay <span id="btnPayTotal">$105.20</span></button>
-          <p class="text-sm text-slate-500">Gifts will be held for at least five days after successful payment and released only after the creator passes verification.</p>
-          <div class="border border-amber-200 bg-amber-50 rounded-xl p-4 mt-4">
+          <button id="gift-checkout" type="button" class="w-full bg-amber-700 text-white font-bold py-3 rounded-xl">Choose Venmo or Cash App</button>
+          <p class="text-sm text-slate-500">Send the gift directly in your payment app. Pay the separate $1.75 Unabl click fee to @UnablPay through Venmo. Unabl does not hold or verify these transfers. Confirm the host’s recipient details before paying.</p>
+          <div hidden class="border border-amber-200 bg-amber-50 rounded-xl p-4 mt-4">
             <h3 class="font-bold">Creator verification &amp; gift protection</h3>
             <p id="creator-trust-detail" class="text-sm mt-2">Find a published event to see its creator’s verification status.</p>
             <button id="vouch-creator" type="button" class="border border-amber-700 rounded-lg p-2 mt-3">I know this creator — vouch</button>
@@ -322,13 +322,7 @@
             </div>
           </div>
 
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Connect Stripe Account (Payouts)</label>
-            <button id="event-stripe-onboarding" type="button" class="w-full bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold py-2.5 px-4 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-indigo-100">
-              <i class="fa-brands fa-stripe text-lg"></i> Connect with Stripe Express
-            </button>
-            <p id="event-stripe-status" role="status" aria-live="polite" class="text-sm mt-2"></p>
-          </div>
+          <p class="text-sm">After publishing, open My account → Manage invited guests to save your Venmo username or Cash App $Cashtag and generate a guest access code. No Stripe account required.</p>
 
           <button id="event-save" onclick="saveEvent()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition">
             Publish Event & Generate Invitations
@@ -546,7 +540,7 @@
 <label id="account-kind-field" hidden>Account type<select id="account-kind" class="block w-full border rounded-lg p-3 mt-1"><option value="user">User / guest</option><option value="creator">Event creator</option></select></label>
 <button id="account-submit" type="submit" class="bg-amber-700 text-white p-3 rounded-lg font-semibold">Sign in</button></form>
 <div id="account-signed-in" hidden class="mt-4"><span id="account-user"></span> <button id="account-signout" type="button" class="border p-2 rounded-lg">Sign out</button></div>
-<p id="account-status" role="status" aria-live="polite" class="mt-3 text-sm"></p><div id="creator-verification-panel" hidden class="border border-amber-200 bg-amber-50 rounded-xl p-4 mt-4"><h3 class="font-bold">★ Event creator verification</h3><p class="text-sm mt-2">Get identity approval and vouches from three different paid gift givers to qualify for a verified star. Unresolved fraud reports block release.</p><p class="text-sm mt-2">Gifts have a minimum five-day hold from successful payment. Verification, payment clearance, and review can take longer. Bank arrival can take additional time.</p><p id="verification-progress" class="text-sm mt-2"></p><button id="stripe-onboarding" type="button" class="bg-amber-700 text-white rounded-lg p-2 mt-3">Connect bank with Stripe</button> <button id="stripe-status" type="button" class="border border-amber-700 rounded-lg p-2 mt-3">Check Stripe requirements</button> <p id="stripe-onboarding-status" role="status" class="text-sm mt-2"></p><button id="request-verification" type="button" class="bg-amber-700 text-white rounded-lg p-2 mt-3">Request verification</button><p class="text-xs text-slate-500 mt-2">Do not upload ID documents here. Stripe securely collects identity and bank details. Complete onboarding, then request an identity review.</p></div><div id="my-events" class="mt-3"></div></div></section>
+<p id="account-status" role="status" aria-live="polite" class="mt-3 text-sm"></p><div id="creator-verification-panel" hidden style="display:none"><p id="verification-progress"></p><button id="request-verification" hidden type="button">Legacy verification</button></div><div id="my-events" class="mt-3"></div></div></section>
 
   <!-- Host Thank You E-Card Modal -->
   <div id="ackModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
@@ -588,9 +582,9 @@
 <p class="text-slate-600 mt-2">Quick answers about your event, gifts, and festive cards.</p>
 <div class="grid md:grid-cols-2 gap-4 mt-5">
 <details class="border rounded-xl p-4"><summary class="font-semibold cursor-pointer">How do I sign up my event?</summary><p class="mt-3 text-slate-600">Choose Sign up and select Event creator. Confirm your email, sign in, then open Host / Create Event. Add your event details and unique hashtag, publish your event, and share the invitation link with friends and family.</p><a href="#account" class="inline-block mt-3 text-amber-800 underline">Create your host account</a></details>
-<details class="border rounded-xl p-4"><summary class="font-semibold cursor-pointer">How do I receive gifts?</summary><p class="mt-3 text-slate-600">Open My account and select Connect bank with Stripe. Create or complete your live Stripe recipient account and add your bank or financial institution (FI) through Stripe’s secure setup. Return and select Check Stripe requirements. Finish any outstanding requirements before receiving gifts.</p></details>
-<details class="border rounded-xl p-4"><summary class="font-semibold cursor-pointer">Is my banking information safe?</summary><p class="mt-3 text-slate-600">Stripe securely collects your identity and bank details on its hosted setup page. Stripe checkout payments go through Stripe. Never enter bank passwords, account numbers, or verification codes into this FAQ box. No online payment service is risk-free; direct Venmo gifts are handled separately by Venmo.</p></details>
-<details class="border rounded-xl p-4"><summary class="font-semibold cursor-pointer">How do people who know me send a bank gift?</summary><p class="mt-3 text-slate-600">Choose Knows, write a card message, enter your name, and confirm you know the event creator. Select Continue with bank account. <strong>No Credit Cards Accepted.</strong> Knows requires a verified US bank account through Stripe. Bank payments can still fail, be disputed, or be reversed. Checkout is available only after Unabl’s ACH-only configuration and the creator’s onboarding are ready.</p></details>
+<details class="border rounded-xl p-4"><summary class="font-semibold cursor-pointer">How do I receive gifts?</summary><p class="mt-3 text-slate-600">Save your Venmo username or Cash App $Cashtag under My account → Manage invited guests for your saved event. Add invited guest emails and share the access code privately. Guests send gifts directly in their own payment app. No Stripe onboarding is required.</p></details>
+<details class="border rounded-xl p-4"><summary class="font-semibold cursor-pointer">Is my banking information safe?</summary><p class="mt-3 text-slate-600">Unabl does not collect your bank details for direct gifts. Enter bank or card information only in your payment provider’s official app. Verify the recipient independently and never share passwords or verification codes.</p></details>
+<details class="border rounded-xl p-4"><summary class="font-semibold cursor-pointer">How do people who know me send a bank gift?</summary><p class="mt-3 text-slate-600">Choose Venmo or Cash App, confirm the host’s exact username or $Cashtag, and complete the gift in that app. Unabl cannot enforce a bank-only funding source or verify the transfer. Provider fees, limits and refund rules apply.</p></details>
 </div>
 <form id="faq-form" class="mt-6 border-t pt-5"><label for="faq-question" class="block font-semibold text-slate-800">Ask Unabl · powered by OpenAI</label><p id="faq-privacy" class="text-sm text-slate-500 mt-1">Ask a general question. Your question is sent to OpenAI; do not include banking details, passwords, or other private information.</p><div class="flex flex-col sm:flex-row gap-3 mt-3"><input id="faq-question" required maxlength="600" aria-describedby="faq-privacy" placeholder="How do I send a festive card?" class="w-full min-w-0 border rounded-lg p-3"><button type="submit" class="bg-amber-700 text-white rounded-lg px-5 py-3 font-semibold shrink-0 disabled:opacity-50">Ask a question</button></div></form>
 <p id="faq-answer" role="status" aria-live="polite" class="mt-4 text-slate-700 whitespace-pre-wrap"></p><p class="text-xs text-slate-500 mt-2">AI answers can be mistaken. Check your account and payment provider for actual requirements and payment status.</p>
@@ -604,7 +598,7 @@
         <span>•</span>
         <a href="#" class="hover:underline">Terms of Service</a>
         <span>•</span>
-        <a href="#" class="hover:underline">Stripe Security</a>
+        <a href="#" class="hover:underline">Payment provider safety</a>
       </div>
     </div>
   </footer>
@@ -791,15 +785,15 @@
       if (isNaN(amount) || amount < 10) amount = 10;
       if (amount > 1000) amount = 1000;
 
-      const unablFee = amount * 0.02;
-      const stripeFee = (amount * 0.029) + 0.30;
+      const unablFee = 1.75;
+      const stripeFee = 0;
       const total = amount + unablFee + stripeFee;
 
       document.getElementById('breakdownGift').innerText = window.formatUnablMoney ? window.formatUnablMoney(amount) : `$${amount.toFixed(2)}`;
       document.getElementById('breakdownUnabl').innerText = window.formatUnablMoney ? window.formatUnablMoney(unablFee) : `$${unablFee.toFixed(2)}`;
       document.getElementById('breakdownStripe').innerText = window.formatUnablMoney ? window.formatUnablMoney(stripeFee) : `$${stripeFee.toFixed(2)}`;
       document.getElementById('breakdownTotal').innerText = window.formatUnablMoney ? window.formatUnablMoney(total) : `$${total.toFixed(2)}`;
-      document.getElementById('btnPayTotal').innerText = window.formatUnablMoney ? window.formatUnablMoney(total) : `$${total.toFixed(2)}`;
+
     }
 
     // Search Event Demo
@@ -813,7 +807,7 @@
 
     // Mock Checkout Action
     function processCheckout() {
-      alert("Redirecting to secure Stripe Checkout... Thank you for blessing the host!");
+      document.getElementById('gift-checkout').click();
     }
 
     // Host Acknowledgment Modal

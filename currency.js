@@ -22,7 +22,7 @@
   document.querySelectorAll('.gift-btn[onclick]').forEach(button=>{const amount=Number(button.getAttribute('onclick').match(/\d+/)?.[0]);if(amount)button.textContent=window.formatUnablMoney(amount,0);});
   for(const [node,text] of templates)node.nodeValue=text.replace(/\$(\d+(?:\.\d+)?)/g,(_,amount)=>window.formatUnablMoney(Number(amount)));
   const input=document.getElementById('customGift');input.setAttribute('aria-label','Other monetary gift amount in '+currency);
-  const notice=document.getElementById('currency-notice');notice.hidden=currency==='USD';notice.textContent=`${currency} price preview only. Numbers are not exchange-rate conversions. Checkout and direct Venmo payments currently use USD; select USD before paying. UK/Euro onboarding and actual processing fees still need configuration.`;
+  const notice=document.getElementById('currency-notice');notice.hidden=currency==='USD';notice.textContent=`${currency} price preview only. Numbers are not exchange-rate conversions. Direct gift handoffs currently use USD; select USD before paying. Provider availability and limits apply.`;
   document.getElementById('gift-checkout').setAttribute('aria-disabled',String(currency!=='USD'));
   window.calculateFees(input.value);
   window.dispatchEvent(new CustomEvent('unabl-currency-change',{detail:{currency}}));

@@ -1,8 +1,8 @@
 import {randomUUID} from 'node:crypto';
-import {route,config,authenticate,uuid,check,fail} from '../lib/payment.js';
+import {route,dataConfig,authenticate,uuid,check,fail} from '../lib/payment.js';
 import {albumAccess,albumDetails,albumPlan,videoDetails,ALBUM_BUCKET,VIDEO_LIMIT} from '../lib/album.js';
 export default route(async(req,res)=>{
- const {db,origin}=config(),user=await authenticate(req,db,origin),b=req.body||{};
+ const {db,origin}=dataConfig(),user=await authenticate(req,db,origin),b=req.body||{};
  if(!uuid(b.event_id))fail('Choose a saved or published event.');
  const access=await albumAccess(db,user,b.event_id,b.access_code),{host,event}=access;let {album}=access;
  const action=b.action||'get';

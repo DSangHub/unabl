@@ -1,6 +1,5 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm';
-import {venmoFeeStep,initStripeFeeQuote} from './stripe-fee-step.js';
 import {initKnownGift} from './known-gift.js';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm';
 import {mountGuestList} from './guest-list.js';
 import {initVoiceGreeting} from './voice-greeting.js';
 import {mountHostAlbum,initGuestAlbum} from './album.js';
@@ -19,7 +18,7 @@ async function refreshTrust(){
 async function refreshCreatorPanel(){
  $('creator-verification-panel').hidden=true;if(!user)return;
  const {data:creator}=await db.from('event_creators').select('user_id').eq('user_id',user.id).maybeSingle();if(!creator)return;
- $('creator-verification-panel').hidden=false;
+ $('creator-verification-panel').hidden=true;
  const [{data:trust},{data:request}]=await Promise.all([db.rpc('get_creator_trust',{target:user.id}),db.from('creator_verification_requests').select('requested_at').eq('creator_id',user.id).maybeSingle()]);
  $('verification-progress').textContent=trust?.verified?'★ Verified creator':`${trust?.vouches||0}/3 paid gift givers have vouched. ${request?'Verification requested — review pending.':'Request your identity review.'}`;
  $('request-verification').disabled=!!request;$('request-verification').textContent=request?'Review requested':'Request verification';
@@ -109,7 +108,7 @@ window.saveEvent=async()=>{
  }catch(e){output.textContent=e.code==='23505'?'That hashtag is already in use. Choose another.':e.message;}finally{button.disabled=false;}
 };
 $('event-invitation-copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('event-invitation-link').value);$('event-publish-status').textContent='Invitation link copied. Paste it into your email or text message.';}catch{$('event-invitation-link').focus();$('event-invitation-link').select();$('event-publish-status').textContent='Select and copy your invitation link.';}});
-window.searchEvent=async()=>{const tag=$('searchHashtag').value.trim().replace(/^#/,'').toLowerCase();if(!tag)return;const {data,error}=await db.from('events').select('id,creator_id,title,hashtag,category,starts_at,venue').eq('hashtag',tag).eq('published',true).maybeSingle();if(error){$('event-status').textContent=error.message;return;}if(!data){selectedEvent=null;window.dispatchEvent(new Event('unabl-event-change'));$('creator-badge').textContent='No event selected';$('creator-trust-detail').textContent='Find a published event first.';$('event-status').textContent='No published event found with that hashtag.';return;}selectedEvent=data;window.dispatchEvent(new Event('unabl-event-change'));$('eventDate').textContent=new Date(data.starts_at).toLocaleString();$('eventLocation').textContent=data.venue;$('hostName').textContent='Event creator';$('eventHostNote').textContent='';$('eventTitle').textContent=data.title;$('displayHashtag').textContent='#'+data.hashtag;$('eventCategory').textContent=data.category;$('event-status').textContent=new Date(data.starts_at).toLocaleString()+' · '+data.venue;await refreshTrust();};
+window.searchEvent=async()=>{const tag=$('searchHashtag').value.trim().replace(/^#/,'').toLowerCase();if(!tag)return;const {data,error}=await db.from('events').select('id,creator_id,title,hashtag,category,starts_at,venue').eq('hashtag',tag).eq('published',true).maybeSingle();if(error){$('event-status').textContent=error.message;return;}if(!data){selectedEvent=null;window.dispatchEvent(new Event('unabl-event-change'));$('creator-badge').textContent='No event selected';$('creator-trust-detail').textContent='Find a published event first.';$('event-status').textContent='No published event found with that hashtag.';return;}selectedEvent=data;window.dispatchEvent(new Event('unabl-event-change'));$('eventDate').textContent=new Date(data.starts_at).toLocaleString();$('eventLocation').textContent=data.venue;$('hostName').textContent='Event creator';$('eventHostNote').textContent='';$('eventTitle').textContent=data.title;$('displayHashtag').textContent='#'+data.hashtag;$('eventCategory').textContent=data.category;$('event-status').textContent=new Date(data.starts_at).toLocaleString()+' · '+data.venue;$('creator-badge').textContent='Direct gifts · confirm the host’s wallet';};
 $('rsvp-save').addEventListener('click',async()=>{if(!user){$('event-status').textContent='Sign in to save your RSVP.';return;}if(!selectedEvent){$('event-status').textContent='Find a published event by hashtag first.';return;}const {error}=await db.from('event_responses').upsert({event_id:selectedEvent.id,user_id:user.id,attendance,message:$('guestMessage').value.trim()},{onConflict:'event_id,user_id'});$('event-status').textContent=error?error.message:'Your RSVP and message were saved. No payment has been collected.';});
 db.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY')recovering=true;setTimeout(async()=>{await sync(session);if(recovering){setAccountMode('update');$('account').scrollIntoView({block:'start'});passwordInput.focus();}},0);});
 const {data,error}=await db.auth.getSession();if(error)status(error.message);else await sync(data.session);if(recovering)setAccountMode('update');
@@ -117,7 +116,7 @@ const {data,error}=await db.auth.getSession();if(error)status(error.message);els
 $('request-verification').addEventListener('click',async()=>{
  if(!user){status('Sign in as an event creator first.');return;}
  $('request-verification').disabled=true;
- try{const {error}=await db.from('creator_verification_requests').insert({creator_id:user.id});if(error&&error.code!=='23505')throw error;await refreshCreatorPanel();status('Verification review requested. Complete Stripe onboarding too. Identity approval requires review.');}catch(e){status(e.message);$('request-verification').disabled=false;}
+ try{const {error}=await db.from('creator_verification_requests').insert({creator_id:user.id});if(error&&error.code!=='23505')throw error;await refreshCreatorPanel();status('Legacy verification review requested. Direct wallet payments are not verified by Unabl.');}catch(e){status(e.message);$('request-verification').disabled=false;}
 });
 const trustStatus=text=>{$('trust-action-status').textContent=text;};
 $('vouch-creator').addEventListener('click',async()=>{
@@ -146,38 +145,6 @@ async function paymentRequest(path,body,method='POST'){
 let giftRequest=null;
 const codeLabel=document.createElement('label');codeLabel.textContent='Gift access code from your host';codeLabel.className='block my-3 text-sm font-semibold';
 const codeInput=document.createElement('input');codeInput.id='gift-access-code';codeInput.type='text';codeInput.autocomplete='off';codeInput.maxLength=29;codeInput.placeholder='XXXX-XXXX-XXXX-XXXX-XXXX-XXXX';codeInput.style.cssText='display:block;width:100%;padding:10px;border:1px solid #94a3b8;border-radius:8px';codeLabel.append(codeInput);$('gift-checkout').before(codeLabel);
-$('gift-checkout').addEventListener('click',async()=>{
- const button=$('gift-checkout');button.disabled=true;
- try{if((window.unablCurrency||'USD')!=='USD')throw Error('GBP and EUR are preview currencies. Select USD to use the current checkout.');if(!selectedEvent)throw Error('Find a published event by hashtag first. Sample celebrations cannot receive payments.');
- const cents=Math.round(Number($('customGift').value)*100);const fingerprint=selectedEvent.id+':'+cents+':'+$('guestMessage').value;
- if(!giftRequest||giftRequest.fingerprint!==fingerprint)giftRequest={fingerprint,id:crypto.randomUUID()};
- await paymentRequest('/api/checkout',{action:'quote',event_id:selectedEvent.id,amount_cents:cents,request_id:giftRequest.id,access_code:$('gift-access-code').value});
- await venmoFeeStep({amount:cents,requestId:giftRequest.id});
- const data=await paymentRequest('/api/checkout',{event_id:selectedEvent.id,amount_cents:cents,message:$('guestMessage').value,request_id:giftRequest.id});
- window.location.assign(data.url);
- }catch(e){$('event-status').textContent=e.message;}finally{button.disabled=false;}
-});
-let onboardingPending=false;
-async function onboarding(action,output=$('stripe-onboarding-status'),button=$('stripe-onboarding')){
- if(onboardingPending)return;onboardingPending=true;button.disabled=true;
- try{
- if(!user){output.textContent='Sign up or sign in as an Event creator to connect your bank with Stripe.';setAccountMode('signup');$('account-kind').value='creator';$('account-email').scrollIntoView({behavior:'smooth',block:'center'});$('account-email').focus();return;}
- output.textContent='Connecting to Stripe…';const data=await paymentRequest('/api/onboarding',{action});
- if(data.url)window.location.assign(data.url);else{output.textContent=data.message;await refreshCreatorPanel();}
- }catch(e){output.textContent=e.message;}finally{onboardingPending=false;button.disabled=false;}
-}
-$('event-stripe-onboarding').addEventListener('click',()=>onboarding('start',$('event-stripe-status'),$('event-stripe-onboarding')));
-$('stripe-onboarding').addEventListener('click',()=>onboarding('start'));
-$('stripe-status').addEventListener('click',()=>onboarding('status'));
-const returnParams=new URLSearchParams(location.search);
-if(returnParams.get('payment')==='cancelled')status('Checkout cancelled. No gift confirmation has been received.');
-if(returnParams.get('payment')==='return'){
- if(user){try{const data=await paymentRequest('/api/payment-status?session_id='+encodeURIComponent(returnParams.get('session_id')) ,null,'GET');status(data.status==='paid'?'Gift payment confirmed. The five-day minimum hold has started.':data.status==='failed'?'Payment failed.':'Payment confirmation is pending. Check your account again shortly.');}catch(e){status(e.message);}}
- else status('Sign in to check the payment confirmation.');
-}
-if(returnParams.get('onboarding')==='return'&&user){await onboarding('status');$('account').scrollIntoView({block:'start'});}
-if(returnParams.get('onboarding')==='refresh'&&user)await onboarding('start');
-
 const invitationTag=new URLSearchParams(location.search).get('event');
 if(invitationTag){window.stopCelebrationSamples?.();window.switchTab('guest');$('searchHashtag').value=invitationTag;await window.searchEvent();}
 
@@ -204,10 +171,9 @@ otherGift.type='button';otherGift.textContent='Other';otherGift.className=docume
 otherGift.setAttribute('aria-controls','customGift');
 otherGift.addEventListener('click',()=>{customGift.focus();customGift.select();});
 giftOptions.append(otherGift);
-initKnownGift({db,getUser:()=>user,getEvent:()=>selectedEvent});
+
+initKnownGift({});
 initDirectGift({request:paymentRequest,getEvent:()=>selectedEvent});
 initVoiceGreeting({request:paymentRequest});
 
 initGuestAlbum({db,request:paymentRequest,getEvent:()=>selectedEvent});
-
-initStripeFeeQuote();
