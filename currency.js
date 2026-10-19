@@ -18,7 +18,7 @@
   const symbol=new Intl.NumberFormat('en-GB',{style:'currency',currency}).formatToParts(0).find(part=>part.type==='currency').value;
   document.getElementById('gift-currency-symbol').textContent=symbol;
   document.getElementById('gift-range-label').textContent=`3. Send Monetary Gift (${window.formatUnablMoney(10,0)} - ${window.formatUnablMoney(1000,0)})`;
-  document.getElementById('handling-fee-label').textContent=`${currency==='USD'?'Payment handling fee':'Illustrative handling fee'} (2.9% + ${window.formatUnablMoney(.30)}):`;
+  document.getElementById('handling-fee-label').textContent='Unabl processing surcharge:';
   document.querySelectorAll('.gift-btn[onclick]').forEach(button=>{const amount=Number(button.getAttribute('onclick').match(/\d+/)?.[0]);if(amount)button.textContent=window.formatUnablMoney(amount,0);});
   for(const [node,text] of templates)node.nodeValue=text.replace(/\$(\d+(?:\.\d+)?)/g,(_,amount)=>window.formatUnablMoney(Number(amount)));
   const input=document.getElementById('customGift');input.setAttribute('aria-label','Other monetary gift amount in '+currency);
