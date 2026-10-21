@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Unabl.app - Celebrate Together</title>
+  <style>html.unabl-choosing body > :not(script):not(style){filter:blur(9px);pointer-events:none}</style>
+  <script>if(!location.hash.startsWith('#card=')&&!location.hash.startsWith('#known-card=')&&!location.hash.includes('type=recovery')&&!location.search.includes('type=recovery'))document.documentElement.classList.add('unabl-choosing');</script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script>
@@ -843,6 +845,7 @@ function openEcard(gold){let html=new TextDecoder().decode(Uint8Array.from(atob(
 if(location.hash.startsWith('#card=')){let html=new TextDecoder().decode(Uint8Array.from(atob(ecardSource),c=>c.charCodeAt(0)));html=html.replace('const hash=location.hash;', 'const hash=window.parent.location.hash;');document.getElementById('ecardEditor').srcdoc=html;document.getElementById('ecardDialog').showModal();}
 </script>
 <script src="./currency.js"></script>
+<script src="./welcome.js"></script>
 <script type="module" src="./backend.js"></script>
 <script type="module" src="./faq.js"></script>
 </body>

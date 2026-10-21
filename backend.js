@@ -155,7 +155,7 @@ giftResponse.style.scrollMarginTop='90px';
 const openingStyle=document.createElement('style');
 openingStyle.textContent='@media(max-width:767px){#eventCard > :first-child{order:2}#gift-response{order:1}}';
 document.head.append(openingStyle);
-if(!recovering&&(!location.hash||location.hash==='#gift-response')){
+if(!window.unablChoosingRole&&!window.unablEntryRole&&!recovering&&(!location.hash||location.hash==='#gift-response')){
  window.switchTab('guest');
  requestAnimationFrame(()=>giftResponse.scrollIntoView({block:'start',behavior:'instant'}));
 }
