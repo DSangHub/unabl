@@ -11,7 +11,7 @@ if(sidebar&&faq){
  steps.innerHTML=`<article id="host-steps-to-follow" aria-labelledby="host-steps-title"><h3 id="host-steps-title" tabindex="-1">Host Steps to Follow</h3><ol>
  <li><strong>Create your host account.</strong> Choose Sign up, select Event creator, confirm your email, then sign in.</li>
  <li><strong>Publish your event.</strong> Open Host / Create Event, add your details and a unique hashtag, then publish. Share the event link or hashtag with your guests.</li>
- <li><strong>Set up invited guests.</strong> In My account, open your saved event’s Manage invited guests. Add each guest’s sign-in email, generate an access code, and share the code privately. Invitations are not emailed automatically.</li>
+ <li><strong>Set up invited guests.</strong> In My account, open your saved event’s Manage invited guests. Enter the guest emails and select Save guest emails, then generate an access code, and share the code privately. Invitations are not emailed automatically.</li>
  <li><strong>Choose how to receive gifts.</strong> Save your Venmo username or Cash App $Cashtag under Manage invited guests. Confirm your recipient details. No Stripe account is needed.</li>
  <li><strong>Preview a video album.</strong> Save and preview a Classic or Gold cover. New album purchases are paused; existing activated albums remain available.</li>
  </ol><p>Direct gifts go through Venmo or Cash App. Unabl does not hold or verify the transfer.</p><a href="#account">Go to My account ↑</a></article>

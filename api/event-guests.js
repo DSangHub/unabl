@@ -1,5 +1,5 @@
 import {route,dataConfig,authenticate,check,fail,uuid} from '../lib/payment.js';
-import {guestEmail,newGiftCode,codeHash} from '../lib/event-guests.js';
+import {guestEmail,newGiftCode,codeHash,saveGuestEmails} from '../lib/event-guests.js';
 import {directCashContact,directVenmoContact} from '../lib/direct-gift.js';
 export default route(async(req,res)=>{
  const {db,origin}=dataConfig(),user=await authenticate(req,db,origin);
@@ -20,6 +20,8 @@ export default route(async(req,res)=>{
   const code=newGiftCode();
   check(await db.from('event_gift_access').upsert({event_id:eventId,code_hash:codeHash(code),created_at:new Date().toISOString()},{onConflict:'event_id'}));
   return res.json({code});
+ }else if(body.action==='add_many'){
+  await saveGuestEmails(db,eventId,body.emails);
  }else if(body.action==='add'){
   const email=guestEmail(body.email);
   check(await db.from('event_guests').upsert({event_id:eventId,email},{onConflict:'event_id,email',ignoreDuplicates:true}));
