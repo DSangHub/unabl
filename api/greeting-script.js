@@ -1,8 +1,8 @@
-import {route,config,authenticate,fail} from '../lib/payment.js';
+import {route,dataConfig,authenticate,fail} from '../lib/payment.js';
 import {greetingText,greetingResponse} from '../lib/greeting.js';
 const requests=new Map();
 export default route(async(req,res)=>{
- const {db,origin}=config(),user=await authenticate(req,db,origin);
+ const {db,origin}=dataConfig(),user=await authenticate(req,db,origin);
  const text=greetingText(req.body?.message),now=Date.now();
  for(const [id,b] of requests)if(now-b.start>60000)requests.delete(id);
  const bucket=requests.get(user.id)||{start:now,count:0};
