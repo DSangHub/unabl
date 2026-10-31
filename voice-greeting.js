@@ -1,9 +1,10 @@
+import {mediaFeePanel} from './media-fees.js';
 export function initVoiceGreeting({request}){
  const section=document.createElement('section');section.id='voice-greeting';section.className='mt-6 p-5 rounded-2xl border border-amber-300 bg-amber-50';
  section.innerHTML=`<h3 class="text-xl font-bold">Send a personal video greeting</h3>
  <p class="mt-2"><strong>E-card · $4.95 | 30-second video · $9.95</strong>. Record yourself with your camera and microphone, upload an existing clip, or prepare an AI greeting with your photo, voice and typed message.</p>
- <p class="mt-2 text-sm font-semibold" role="status">Camera recording and local downloads are available at no charge while paid checkout is being connected. AI animation and voice cloning are not connected; AI drafts cannot yet be rendered or purchased.</p>
- <button type="button" style="padding:12px 18px;background:#65427e;color:white;border-radius:9px;font-weight:bold;margin:10px 8px 0 0" data-camera-open>Record / upload a video</button><button type="button" style="padding:12px 18px;border:1px solid #65427e;border-radius:9px;font-weight:bold;margin-top:10px" data-open>Create an AI greeting</button>`;
+ <p class="mt-2 text-sm font-semibold" role="status">Card and recorded-video fees can be paid manually through Venmo or Cash App below. Payments remain unverified by Unabl. AI animation and voice cloning are not connected; do not pay for an AI video yet.</p>
+ <button type="button" style="padding:12px 18px;background:#65427e;color:white;border-radius:9px;font-weight:bold;margin:10px 8px 0 0" data-camera-open>Record / upload a video</button><button type="button" style="padding:12px 18px;border:1px solid #65427e;border-radius:9px;font-weight:bold;margin-top:10px" data-open>Create an AI greeting</button>${mediaFeePanel()}`;
  document.getElementById('gift-checkout').parentElement.append(section);
  const dialog=document.createElement('dialog');dialog.setAttribute('aria-label','Personal congratulations greeting draft');
  const css=document.createElement('style');css.textContent='.unabl-ai-editor .btn-primary{background:#65427e;color:white;padding:10px 14px;border-radius:8px;font-weight:700;cursor:pointer}.unabl-ai-editor .btn-primary:disabled{opacity:.5;cursor:default}';document.head.append(css);dialog.className='unabl-ai-editor';

@@ -13,3 +13,7 @@ Tests cover single-email validation/header injection, safe draft query encoding,
 Listed pricing: $4.95 per card and $9.95 per 30-second video. Paid checkout is not connected, so local preview/export is explicitly no-charge for now. An AI greeting button opens the separate photo/voice/script draft editor, not a working rendering or cloning service.
 
 Camera lifecycle tests cover automatic stop, late permission after cancellation, size/duration rejection, and denied permissions. Camera streams and media stay local; capture does not require auth or a paid order while checkout is unavailable.
+
+## Manual media fees (2026-10-31)
+
+Replaces the temporary no-charge media copy above: the composer and event video panel now offer manual service fee profile links to Venmo @UnablPay and Cash App $unablpay. E-card $4.95; recorded/uploaded video up to 30 seconds $9.95. Amounts are entered by the payer in the wallet. There is no automated payment verification, paid entitlement, payment receipt or unlock; local downloads do not assert payment. Return is manual. Keep the provider receipt. AI generation is still disconnected: the UI explicitly says not to pay for an AI video and that payment will not enable rendering. No payment was made during implementation or verification. Host gifts and their $1.75 click fee remain separate.
