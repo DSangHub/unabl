@@ -34,6 +34,6 @@ export default async function handler(req,res){
   return res.json({values});
  }catch(error){
   console.error('Site translation failed',error.message.slice(0,120));
-  return res.status(503).json({error:'Translations unavailable'});
+  return res.status(503).json({error:'Translations unavailable',providerStatus:error.providerStatus,providerCode:error.providerCode});
  }
 }
