@@ -1,1 +1,1 @@
-{"name":"unabl","private":true,"type":"module","scripts":{"test":"node --test test/*.test.js"},"dependencies":{"stripe":"22.6.0","@supabase/supabase-js":"2.57.4"}}
+{"name":"unabl","private":true,"type":"module","scripts":{"test":"node --test test/*.test.js","build:languages":"node scripts/build-site-catalog.js"},"dependencies":{"@supabase/supabase-js":"2.57.4","stripe":"22.6.0"},"devDependencies":{"acorn":"^8.19.0","parse5":"^8.1.0"}}

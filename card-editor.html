@@ -75,4 +75,5 @@ if(!navigator.share)$('native-share').classList.add('hidden');$('native-share').
 function load(){const hash=location.hash;recipientMode=hash.length>1;if(recipientMode){document.body.classList.add('recipient');$('editor').classList.add('hidden');$('intro').classList.add('hidden');$('layout').style.display='block';$('stage-label').textContent='Someone sent you a card';$('create-link').classList.remove('hidden');try{if(!hash.startsWith('#card='))throw Error('invalid');render(decode(hash.slice(6)));setOpen(false);}catch{$('error').classList.remove('hidden');$('layout').classList.add('hidden');}}else{render(readForm());setOpen(true);}}
 load();updatePrice();window.addEventListener('hashchange',()=>location.reload());
 </script>
+<script type="module" src="./site-language.js"></script>
 </body></html>
