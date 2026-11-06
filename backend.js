@@ -1,3 +1,4 @@
+import {groupHostEvents} from './event-archive.js';
 import {initKnownGift} from './known-gift.js';
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm';
 import {mountGuestList} from './guest-list.js';
@@ -29,17 +30,31 @@ async function profile(){
  const {error}=await db.from('profiles').upsert({id:user.id,display_name:display}); if(error)throw error;
  if(user.user_metadata?.account_kind==='creator') {const {error}=await db.from('event_creators').upsert({user_id:user.id,organizer_name:display});if(error)throw error;}
 }
+let eventListRequest=0;
 async function myEvents(){
- $('my-events').replaceChildren();if(!user)return;
- const card=document.createElement('button');card.type='button';card.textContent='Create / download an e-card';card.style.cssText='display:inline-block;padding:12px 18px;background:#92400e;color:white;border-radius:9px;margin:14px 0;font-weight:800';card.onclick=()=>document.querySelector('#send-directly button').click();$('my-events').append(card);
+ const requestId=++eventListRequest,owner=user?.id,root=$('my-events');
+ if(!owner){root.replaceChildren();return;}
+ const content=document.createDocumentFragment();
+ const card=document.createElement('button');card.type='button';card.textContent='Create / download an e-card';card.style.cssText='display:inline-block;padding:12px 18px;background:#92400e;color:white;border-radius:9px;margin:14px 0;font-weight:800';card.onclick=()=>document.querySelector('#send-directly button').click();content.append(card);
 
- const {data,error}=await db.from('events').select('id,title,hashtag,starts_at,venue,category').eq('creator_id',user.id).order('created_at',{ascending:false});if(error)throw error;
- if(data.length){const heading=document.createElement('h3');heading.textContent='Your saved events';heading.className='font-bold';$('my-events').append(heading);}
- for(const event of data){
+ const {data,error}=await db.from('events').select('id,title,hashtag,starts_at,venue,category').eq('creator_id',owner);
+ if(requestId!==eventListRequest||user?.id!==owner)return;
+ if(error)throw error;
+ const {active,archived}=groupHostEvents(data);
+ const heading=document.createElement('h3');heading.textContent='Upcoming and recent events';heading.className='font-bold';content.append(heading);
+ const archive=document.createElement('details');archive.className='host-event-box';archive.open=root.querySelector('[data-event-archive]')?.open||false;archive.dataset.eventArchive='';
+ const archiveHeading=document.createElement('summary');archiveHeading.className='font-bold cursor-pointer';archiveHeading.textContent='Past events archive';archive.append(archiveHeading);
+ const archiveNote=document.createElement('p');archiveNote.textContent='Events move here 24 hours after their scheduled start. Your RSVPs, messages, and albums are kept.';archive.append(archiveNote);
+ if(!active.length){const empty=document.createElement('p');empty.textContent='No upcoming or recent events.';content.append(empty);}
+ for(const event of active)renderEvent(event,content,false);
+ for(const event of archived)renderEvent(event,archive,true);
+ if(archived.length)content.append(archive);
+ root.replaceChildren(content);
+ function renderEvent(event,target,isArchived){
  const box=document.createElement('article');box.className='host-event-box';const heading=document.createElement('h4');heading.textContent=event.title;heading.className='font-bold text-lg';const info=document.createElement('p');info.textContent='#'+event.hashtag+' · '+new Date(event.starts_at).toLocaleString();const actions=document.createElement('div');actions.className='host-event-actions';
- const view=document.createElement('a');view.textContent='Open event / save my RSVP';view.href='/?event='+encodeURIComponent(event.hashtag);view.className='host-save-button';
+ const view=document.createElement('a');view.textContent=isArchived?'Open past event':'Open event / save my RSVP';view.href='/?event='+encodeURIComponent(event.hashtag);view.className='host-save-button';
  const edit=document.createElement('button');edit.type='button';edit.textContent='Edit / save event details';edit.className='host-save-button';edit.onclick=()=>{editingEventId=event.id;$('event-title-input').value=event.title;$('newHashtagInput').value=event.hashtag;$('event-venue').value=event.venue;$('eventCatInput').value=event.category;const date=new Date(event.starts_at);$('event-starts').value=new Date(date-date.getTimezoneOffset()*60000).toISOString().slice(0,16);$('event-save').textContent='Save event changes';window.switchTab('host');$('event-title-input').scrollIntoView({block:'center'});$('event-title-input').focus();$('event-publish-status').textContent='Editing your saved event. Select Save event changes when finished.';};
- actions.append(view,edit);box.append(heading,info,actions);$('my-events').append(box);mountGuestList(box,event,paymentRequest);
+ actions.append(view,edit);box.append(heading,info,actions);target.append(box);mountGuestList(box,event,paymentRequest);
  const replies=document.createElement('details'),summary=document.createElement('summary'),result=document.createElement('div');summary.textContent='View saved guest RSVPs & messages';replies.append(summary,result);box.append(replies);replies.addEventListener('toggle',async()=>{if(!replies.open)return;result.textContent='Loading saved RSVPs…';const {data:responses,error}=await db.from('event_responses').select('attendance,message').eq('event_id',event.id);if(error){result.textContent='Unable to load RSVPs. Please try again.';return;}result.replaceChildren();for(const response of responses){const row=document.createElement('p');row.textContent=(response.attendance==='attending'?'Attending':'Unable to attend')+(response.message?' — '+response.message:'');row.style.whiteSpace='pre-wrap';row.style.overflowWrap='anywhere';result.append(row);}if(!responses.length)result.textContent='No RSVPs saved yet. Adding an email invites a guest; it does not create their RSVP.';});
  mountHostAlbum(box,event,paymentRequest);
  }
