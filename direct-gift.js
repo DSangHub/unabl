@@ -5,14 +5,15 @@ export function initDirectGift({request,getEvent}){
  <p><strong>$1.75 Unabl click fee per gift handoff — no percentage fee.</strong> Pay the fee separately to <strong>@UnablPay through Venmo</strong>, then return here to send the host’s gift. The gift goes directly to the host in your chosen wallet. Provider fees and limits may apply.</p>
  <p class="text-sm">Choose Venmo or Cash App. Stripe onboarding is no longer needed. Unabl does not control the funding source in these apps, so bank-only or no-credit-card restrictions cannot be enforced here.</p>
  <p class="text-sm">Sign in with your invited email and enter the host’s gift access code above. Confirm all recipient details independently before paying.</p>
- <button data-reveal type="button" class="known-button">Choose direct-gift option</button><p data-status role="status" aria-live="polite"></p><div data-options></div>
  <p class="text-sm">The $1.75 fee and host gift are separate manual payments. Opening a Venmo profile does not prefill or submit a payment. Unabl cannot automatically confirm either payment. Unabl does not hold direct gifts or count them as verified paid vouches. Unabl cannot cancel or refund the host’s transfer. Send your card separately using the card editor.</p>`;
- document.getElementById('gift-checkout').after(panel);
- document.getElementById('gift-checkout').onclick=()=>{panel.scrollIntoView({behavior:'smooth',block:'start'});panel.querySelector('[data-reveal]').click();};
+ const button=document.getElementById('gift-checkout'),code=document.getElementById('gift-access-code');
+ const feedback=document.createElement('section');feedback.className='known-panel';feedback.hidden=true;feedback.style.scrollMarginBlock='9rem 1rem';
+ feedback.innerHTML='<p data-status role="status" aria-live="polite"></p><div data-options></div>';
+ button.after(feedback,panel);
  let contextVersion=0;
- const status=panel.querySelector('[data-status]'),options=panel.querySelector('[data-options]'),button=panel.querySelector('[data-reveal]');
+ const status=feedback.querySelector('[data-status]'),options=feedback.querySelector('[data-options]');
  const link=(label,url)=>{const a=document.createElement('a');a.textContent=label;a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.className='known-button';return a;};
- const clear=()=>{contextVersion++;options.replaceChildren();status.textContent='';};
+ const clear=()=>{contextVersion++;options.replaceChildren();status.textContent='';feedback.hidden=true;code.removeAttribute('aria-invalid');};
  function showHost(key,label,contact){
   options.replaceChildren();const heading=document.createElement('h4'),recipient=document.createElement('p'),copy=document.createElement('button'),notice=document.createElement('p');
   heading.textContent=label+' gift portal';heading.className='font-bold';recipient.textContent='Host-provided recipient: '+(key==='venmo'?'@':'$')+contact;recipient.style.overflowWrap='anywhere';
@@ -31,16 +32,22 @@ export function initDirectGift({request,getEvent}){
   back.onclick=()=>showHost(key,label,contact);
   options.append(heading,instructions,fee,reminder,back);status.textContent='Chosen gift method: '+label+'. Unabl click fee: $1.75.';
  }
- button.onclick=async()=>{button.disabled=true;options.replaceChildren();try{
+ button.onclick=async()=>{if(button.disabled)return;const version=++contextVersion;button.disabled=true;button.setAttribute('aria-busy','true');feedback.hidden=false;code.removeAttribute('aria-invalid');options.replaceChildren();status.textContent='Checking gift access…';feedback.scrollIntoView({block:'nearest'});try{
   if((window.unablCurrency||'USD')!=='USD')throw Error('Select USD for direct gifts. Currency previews are not conversions.');const amount=Number(document.getElementById('customGift').value);if(!Number.isFinite(amount)||amount<10||amount>1000)throw Error('Enter a gift amount from $10 to $1,000.');
-  const version=contextVersion,event=getEvent();if(!event)throw Error('Find a published event first.');
-  const data=await request('/api/direct-gift',{event_id:event.id,access_code:document.getElementById('gift-access-code').value});
+  const event=getEvent();if(!event)throw Error('Find a published event first.');
+  const accessCode=code.value.trim();
+  if(!/^([a-f0-9]{4}-){5}[a-f0-9]{4}$|^[a-f0-9]{24}$/i.test(accessCode)){
+   code.setAttribute('aria-invalid','true');
+   throw Error('Enter the full gift access code: six groups of four characters. Ask your host to resend it if it is incomplete.');
+  }
+  const data=await request('/api/direct-gift',{event_id:event.id,access_code:accessCode});
   if(contextVersion!==version||getEvent()?.id!==event.id)return;
   if(data.unabl_fee_cents!==175||data.fee_username!=='UnablPay'||data.fee_url!=='https://venmo.com/UnablPay')throw Error('Fee setup changed. Refresh and try again.');
   for(const [key,label] of [['venmo','Venmo'],['cash_app','Cash App']]){
    const contact=data.contacts[key];if(!contact)continue;const choice=document.createElement('button');choice.type='button';choice.className='known-button mr-2';choice.textContent=label+' · $1.75 Unabl fee';choice.onclick=()=>showFee(key,label,contact,data);options.append(choice);
   }
   status.textContent=options.childElementCount?'Choose your gift method. The $1.75 fee goes to @UnablPay; the gift goes separately to your host.':'The host has not enabled direct gifts yet. Ask them to save a wallet contact under My account → Manage invited guests.';
- }catch(e){status.textContent=e.message;}finally{button.disabled=false;}};
+ }catch(e){if(contextVersion===version){status.textContent=e.message;feedback.scrollIntoView({block:'nearest'});}}finally{button.disabled=false;button.removeAttribute('aria-busy');}};
+ code.addEventListener('input',clear);
  window.addEventListener('unabl-account-change',clear);window.addEventListener('unabl-event-change',clear);
 }
