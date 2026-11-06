@@ -18,10 +18,21 @@ export function mountGuestList(container,event,request){
  panel.append(walletForm);
  walletForm.onsubmit=async e=>{e.preventDefault();const button=walletForm.querySelector('button');button.disabled=true;try{await request('/api/event-guests',{event_id:event.id,action:'save_contacts',cash_app:walletForm.querySelector('[data-cash]').value,venmo:walletForm.querySelector('[data-venmo]').value,share_with_guests:walletForm.querySelector('[data-share]').checked});status.textContent='Direct-gift contacts saved. Leave a field empty to disable that option.';}catch(e){status.textContent=e.message;}finally{button.disabled=false;}};
  const generate=document.createElement('button'),code=document.createElement('input'),codeHelp=document.createElement('p');
- generate.type='button';generate.textContent='Generate / replace gift access code';generate.className='host-save-button';code.readOnly=true;code.hidden=true;code.setAttribute('aria-label','New gift access code');code.style.cssText='width:100%;padding:10px;font-family:monospace';
+ const codeBox=document.createElement('div'),codeRow=document.createElement('div'),copyCode=document.createElement('button'),copyStatus=document.createElement('p');
+ codeBox.hidden=true;
+ codeRow.style.cssText='display:flex;flex-wrap:wrap;gap:8px;align-items:center';
+ copyCode.type='button';copyCode.textContent='Copy code';copyCode.className='host-save-button';copyCode.style.margin='0';
+ copyStatus.className='text-sm';copyStatus.setAttribute('role','status');
+ codeRow.append(code,copyCode);codeBox.append(codeRow,copyStatus);
+ copyCode.addEventListener('click',async()=>{
+  if(!code.value)return;
+  try{await navigator.clipboard.writeText(code.value);copyStatus.textContent='Code copied. Paste it into a private message to your guests.';}
+  catch{code.focus();code.select();copyStatus.textContent='Automatic copy is unavailable. Copy the selected code using your browser or keyboard.';}
+ });
+ generate.type='button';generate.textContent='Generate / replace gift access code';generate.className='host-save-button';code.readOnly=true;code.setAttribute('aria-label','New gift access code');code.style.cssText='flex:1 1 16rem;min-width:0;max-width:100%;padding:10px;font-family:monospace;border:1px solid #94a3b8;border-radius:6px';
  codeHelp.textContent='Generate a code and share it privately with invited guests. A replacement blocks the old code on new gift access requests. Previously revealed wallet details cannot be recalled. The code is shown only when generated.';
- codeHelp.className='text-sm';panel.append(generate,code,codeHelp);
- generate.addEventListener('click',async()=>{if(busy)return;if(!confirm('Generate a new code? Any previous code will stop working for new gift access requests.'))return;busy=true;generate.disabled=true;try{const result=await request('/api/event-guests',{event_id:event.id,action:'generate_code'});code.value=result.code;code.hidden=false;code.select();status.textContent='New code generated. Copy it and share it privately with your invited guests.';}catch(e){status.textContent=e.message;}finally{busy=false;generate.disabled=false;}});
+ codeHelp.className='text-sm';panel.append(generate,codeBox,codeHelp);
+ generate.addEventListener('click',async()=>{if(busy)return;if(!confirm('Generate a new code? Any previous code will stop working for new gift access requests.'))return;busy=true;generate.disabled=true;try{const result=await request('/api/event-guests',{event_id:event.id,action:'generate_code'});code.value=result.code;codeBox.hidden=false;copyStatus.textContent='New code generated. Use Copy code to share it privately.';copyCode.focus();}catch(e){status.textContent=e.message;}finally{busy=false;generate.disabled=false;}});
  async function load(){
   const data=await request('/api/event-guests?event_id='+encodeURIComponent(event.id),null,'GET');
   walletForm.querySelector('[data-cash]').value=data.contacts?.cash_app||'';
