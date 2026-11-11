@@ -1,5 +1,5 @@
 import {cashProfile} from './wallet-utils.js';
-export function initDirectGift({request,getEvent}){
+export function initDirectGift({request,getEvent,getFund=()=>null}){
  const panel=document.createElement('section');panel.id='direct-gift-portal';panel.className='known-panel';
  panel.innerHTML=`<h3 class="font-bold text-xl">Send directly to your host</h3>
  <p><strong>$1.75 Unabl click fee per gift handoff — no percentage fee.</strong> Pay the fee separately to <strong>@UnablPay through Venmo</strong>, then return here to send the host’s gift. The gift goes directly to the host in your chosen wallet. Provider fees and limits may apply.</p>
@@ -20,7 +20,15 @@ export function initDirectGift({request,getEvent}){
   copy.textContent='Copy host recipient';copy.type='button';copy.className='known-button known-outline';copy.onclick=async()=>{try{await navigator.clipboard.writeText(contact);status.textContent='Recipient copied. Confirm it with your host before sending.';}catch{status.textContent='Select and copy the host recipient above.';}};
   notice.textContent='Fee status: unverified. Your return does not confirm payment. Send only the gift amount to the host; the $1.75 Unabl fee is separate. No 2% Unabl fee applies to this direct gift.';
   const url=key==='venmo'?'https://venmo.com/'+encodeURIComponent(contact):cashProfile(contact);
-  options.append(heading,notice,recipient,copy,document.createTextNode(' '),link('Open host’s '+label+' profile',url));
+  options.append(heading,notice,recipient);
+  const fund=getFund();
+  if(fund){
+   const note=document.createElement('p'),name=document.createElement('strong');
+   name.textContent=fund;name.setAttribute('translate','no');
+   const prompt=document.createElement('span');prompt.textContent='Include this fund in your gift payment note:';
+   note.append(prompt,document.createTextNode(' '),name);options.append(note);
+  }
+  options.append(copy,document.createTextNode(' '),link('Open host’s '+label+' profile',url));
   status.textContent='You’re back in the Gift Portal. Complete the host’s gift in your wallet app and keep both receipts.';
  }
  function showFee(key,label,contact,data){
@@ -49,5 +57,6 @@ export function initDirectGift({request,getEvent}){
   status.textContent=options.childElementCount?'Choose your gift method. The $1.75 fee goes to @UnablPay; the gift goes separately to your host.':'The host has not enabled direct gifts yet. Ask them to save a wallet contact under My account → Manage invited guests.';
  }catch(e){if(contextVersion===version){status.textContent=e.message;feedback.scrollIntoView({block:'nearest'});}}finally{button.disabled=false;button.removeAttribute('aria-busy');}};
  code.addEventListener('input',clear);
+ window.addEventListener('unabl-gift-fund-change',clear);
  window.addEventListener('unabl-account-change',clear);window.addEventListener('unabl-event-change',clear);
 }

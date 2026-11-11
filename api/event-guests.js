@@ -1,3 +1,4 @@
+import {registryFunds} from '../cash-registry-values.js';
 import {route,dataConfig,authenticate,check,fail,uuid} from '../lib/payment.js';
 import {guestEmail,newGiftCode,codeHash,saveGuestEmails} from '../lib/event-guests.js';
 import {directCashContact,directVenmoContact} from '../lib/direct-gift.js';
@@ -11,6 +12,11 @@ export default route(async(req,res)=>{
   const guests=check(await db.from('event_guests').select('id,email,created_at').eq('event_id',eventId).order('created_at',{ascending:false}));
   const contacts=check(await db.from('event_direct_contacts').select('venmo,cash_app').eq('event_id',eventId).maybeSingle());
   return res.json({guests,contacts});
+ }
+ if(body.action==='save_registry'){
+  let funds;try{funds=registryFunds(body.funds);}catch(error){fail(error.message);}
+  check(await db.from('event_cash_registries').upsert({event_id:eventId,funds},{onConflict:'event_id'}));
+  return res.json({ok:true});
  }
  if(body.action==='save_contacts'){
   if(body.share_with_guests!==true)fail('Confirm you want to share these wallet contacts with invited guests.');

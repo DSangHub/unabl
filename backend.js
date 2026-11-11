@@ -1,3 +1,4 @@
+import {mountHostRegistry,initGuestRegistry} from './cash-registry.js';
 import {groupHostEvents} from './event-archive.js';
 import {initKnownGift} from './known-gift.js';
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm';
@@ -54,7 +55,7 @@ async function myEvents(){
  const box=document.createElement('article');box.className='host-event-box';const heading=document.createElement('h4');heading.textContent=event.title;heading.className='font-bold text-lg';const info=document.createElement('p');info.textContent='#'+event.hashtag+' · '+new Date(event.starts_at).toLocaleString();const actions=document.createElement('div');actions.className='host-event-actions';
  const view=document.createElement('a');view.textContent=isArchived?'Open past event':'Open event / save my RSVP';view.href='/?event='+encodeURIComponent(event.hashtag);view.className='host-save-button';
  const edit=document.createElement('button');edit.type='button';edit.textContent='Edit / save event details';edit.className='host-save-button';edit.onclick=()=>{editingEventId=event.id;$('event-title-input').value=event.title;$('newHashtagInput').value=event.hashtag;$('event-venue').value=event.venue;$('eventCatInput').value=event.category;const date=new Date(event.starts_at);$('event-starts').value=new Date(date-date.getTimezoneOffset()*60000).toISOString().slice(0,16);$('event-save').textContent='Save event changes';window.switchTab('host');$('event-title-input').scrollIntoView({block:'center'});$('event-title-input').focus();$('event-publish-status').textContent='Editing your saved event. Select Save event changes when finished.';};
- actions.append(view,edit);box.append(heading,info,actions);target.append(box);mountGuestList(box,event,paymentRequest);
+ actions.append(view,edit);box.append(heading,info,actions);target.append(box);mountHostRegistry(box,event,db,paymentRequest);mountGuestList(box,event,paymentRequest);
  const replies=document.createElement('details'),summary=document.createElement('summary'),result=document.createElement('div');summary.textContent='View saved guest RSVPs & messages';replies.append(summary,result);box.append(replies);replies.addEventListener('toggle',async()=>{if(!replies.open)return;result.textContent='Loading saved RSVPs…';const {data:responses,error}=await db.from('event_responses').select('attendance,message').eq('event_id',event.id);if(error){result.textContent='Unable to load RSVPs. Please try again.';return;}result.replaceChildren();for(const response of responses){const row=document.createElement('p');row.textContent=(response.attendance==='attending'?'Attending':'Unable to attend')+(response.message?' — '+response.message:'');row.style.whiteSpace='pre-wrap';row.style.overflowWrap='anywhere';result.append(row);}if(!responses.length)result.textContent='No RSVPs saved yet. Adding an email invites a guest; it does not create their RSVP.';});
  mountHostAlbum(box,event,paymentRequest);
  }
@@ -201,7 +202,8 @@ otherGift.addEventListener('click',()=>{customGift.focus();customGift.select();}
 giftOptions.append(otherGift);
 
 initKnownGift({});
-initDirectGift({request:paymentRequest,getEvent:()=>selectedEvent});
+const getFund=initGuestRegistry({db,getEvent:()=>selectedEvent});
+initDirectGift({request:paymentRequest,getEvent:()=>selectedEvent,getFund});
 initVoiceGreeting({request:paymentRequest});
 
 initGuestAlbum({db,request:paymentRequest,getEvent:()=>selectedEvent});
