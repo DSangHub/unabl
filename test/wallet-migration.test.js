@@ -11,7 +11,7 @@ test('Cash App identifiers reject URLs, query injection and non-Cashtags',()=>{
  for(const value of ['https://cash.app/$RoseBloom','Rose?amount=50','<script>','123456','a'.repeat(21),'a/b','a_b'])assert.throws(()=>cashTag(value));
 });
 test('new Stripe routes are disconnected even with payments enabled and no keys',async()=>{
- for(const handler of [checkout,onboarding,albumCheckout]){
+ for(const handler of [checkout,onboarding]){
   const res={setHeader(){},status(code){this.code=code;return this;},json(body){this.body=body;}};
   await handler({method:'POST',body:{}},res);assert.equal(res.code,410);assert.match(res.body.error,/Stripe is disconnected/);
  }

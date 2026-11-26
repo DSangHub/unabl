@@ -28,5 +28,5 @@ test('translation preserves prices and wallet IDs and rejects corrupted placehol
 
 test('catalog includes copy from dynamic dialogs and the embedded card editor',()=>{
  const strings=parts.flat();
- for(const label of ['Guest','Host','Create an AI greeting','Pay Unabl by Venmo or Cash App','Close card','Copy link'])assert.ok(strings.includes(label),label);
+ for(const label of ['Guest','Host','Create an AI greeting','Pay Unabl with Stripe, Venmo or Cash App','Close card','Copy link'])assert.ok(strings.includes(label),label);
 });
