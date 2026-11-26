@@ -1,3 +1,5 @@
+> Current service checkout preparation: see [STRIPE_SERVICES.md](STRIPE_SERVICES.md). Personal host gifts remain external wallets. The historical Connect gift flow below remains disconnected.
+
 # Unabl gift payments
 
 Gift checkout uses Stripe-hosted Checkout with prices calculated on the server. New standard Stripe checkouts collect only the gift plus the displayed handling fee of 2.9% + $0.30. Unabl’s former 2% platform fee is removed. The Unabl click fee is paid separately to @UnablPay through Venmo: $10–$100 inclusive $1.75; over $100–$500 inclusive $2.95; over $500–$1,000 $4.95. It is excluded from Stripe totals. The handling fee is a product price, not a statement of Stripe's actual fees. Standard and gold standalone card carts and promotion drafts remain separate and do not yet collect payment.
